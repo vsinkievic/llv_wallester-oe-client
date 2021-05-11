@@ -117,9 +117,9 @@ class wallester.WallesterApiClient implements WallesterApi:
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
 // for debug only
-                def var cResponseString as longchar no-undo.                                    
-                oResponseJson:Write(cResponseString, true).                                       
-                copy-lob from cResponseString to file "target/createPerson-response.json".
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/createPerson-response.json".
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
 
@@ -210,14 +210,14 @@ class wallester.WallesterApiClient implements WallesterApi:
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
 // for debug only
-                def var cResponseString as longchar no-undo.                                    
-                oResponseJson:Write(cResponseString, true).                                       
-                copy-lob from cResponseString to file "target/getPersonByExternalId-response.json".
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getPersonByExternalId-response.json".
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.
         end.
-        undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+        undo, throw new AppError(subst("Failed to get person by external ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
 
         finally:
             if valid-object(oResponseJson)  then delete object oResponseJson.
@@ -244,7 +244,7 @@ class wallester.WallesterApiClient implements WallesterApi:
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.
         end.
-        undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+        undo, throw new AppError(subst("Failed to get person by ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
 
         finally:
             if valid-object(oResponseJson)  then delete object oResponseJson.
@@ -323,7 +323,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         def var cJwtToken as char no-undo.
         def var oResponseClaims as JsonObject no-undo.
         
- //       message wallesterUrl + pcEndpointUrl view-as alert-box.
+//        message wallesterUrl + pcEndpointUrl view-as alert-box.
         case pcRequestType:
             when "POST" 
             then oRequest = RequestBuilder:Post(wallesterUrl + pcEndpointUrl, poRequestJson):AcceptJson()
@@ -526,9 +526,66 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical updatePerson( input-output TABLE for ttPerson, input pcAuditUser as character ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oPersonJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        find ttPerson no-error.
+        if not available ttPerson
+        then undo, throw new AppError("Provide ttPerson record!", 0).
+        
+        if ttPerson.id =? or ttPerson.id = ""
+        then undo, throw new AppError("Provide personID!", 0).
+        
+        oPersonJson = new JsonObject().
+        oPersonJson:add("id",                     ttPerson.id).
+        oPersonJson:add("personal_number",        ttPerson.personal_number).
+        oPersonJson:add("personal_number_issuer", ttPerson.personal_number_issuer).
+        oPersonJson:add("title",                  ttPerson.title_name).
+        oPersonJson:add("first_name",             ttPerson.first_name).
+        oPersonJson:add("middle_name",            ttPerson.middle_name).
+        oPersonJson:add("last_name",              ttPerson.last_name).
+        oPersonJson:add("birth_date",             ttPerson.birth_date).
+        oPersonJson:add("birth_country_code",     ttPerson.birth_country_code).
+        oPersonJson:add("gender",                 caps(ttPerson.gender)).
+        oPersonJson:add("mobile",                 ttPerson.mobile).
+        oPersonJson:add("email",                  ttPerson.email).
+        oPersonJson:add("external_id",            ttPerson.external_id).
+        oPersonJson:add("residence_country_code", ttPerson.residence_country_code).
+        oPersonJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
+        oPersonJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
+        oPersonJson:add("is_politically_exposed_person", ttPerson.is_pep).
+        oPersonJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
+        oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
+        oPersonJson:add("risk_profile",           ttPerson.risk_profile).
+        oPersonJson:add("loyalty_number",         ttPerson.loyalty_number).
+        oRequestJson = new JsonObject().
+        oRequestJson:add("person", oPersonJson).
+        
+        oResponse = _executeRequest("PUT", "/v1/persons/" + ttPerson.id, pcAuditUser, oRequestJson).
+        empty temp-table ttPerson.        
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/updatePerson-response.json".
+
+            _parsePerson(oResponseJson:GetJsonObject("person")).
+
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to update person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oPersonJson)    then delete object oPersonJson.
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
 end class.

@@ -150,9 +150,43 @@ class wallester.WallesterApiClientItTest:
        Assert:IsTrue(isOk).
        temp-table ttPerson:write-json("file", "target/createPerson.json", true).
     end method.
-    
-    
+ 
    // @Test.
+    method public void updatePersonTest():
+       // given
+       create ttPerson.
+       ttPerson.id = "d4d87e9f-d556-404f-abbd-905f6473b868".
+       ttPerson.personal_number = "AK123456".
+       ttPerson.personal_number_issuer = "LTU".
+       ttPerson.title_name = "Mr.".
+       ttPerson.first_name = "Testauskas s".
+       ttPerson.middle_name = "Middle.".
+       ttPerson.last_name = "Tester.".
+       ttPerson.birth_date = date(09, 09, 1999).
+       ttPerson.birth_country_code = "LVA".
+       ttPerson.gender = "FEMALE".
+       ttPerson.mobile = "+37061411111".
+       ttPerson.email = "valdemar_@bpm-id.com".
+       ttPerson.external_id = "person_123_".
+       ttPerson.residence_country_code = "LIE".
+       ttPerson.is_represented_by_someone_else = true.
+       ttPerson.is_beneficial_owner = false.
+       ttPerson.is_pep = false.
+       ttPerson.pep_explanation = "Testing political explanation".
+       ttPerson.business_relationship_purpose = "business relation_".
+       ttPerson.risk_profile = "Medium".
+       ttPerson.loyalty_number = "loyalty_number".
+       
+       // when 
+       isOk = api:updatePerson(input-output table ttPerson, auditUser).
+       
+       // then
+       Assert:IsTrue(isOk).
+       temp-table ttPerson:write-json("file", "target/updatePersonTest.json", true).
+    end method.
+    
+    
+    @Test.
     method public void getPersonById():
         // given
         
@@ -166,7 +200,7 @@ class wallester.WallesterApiClientItTest:
     end method.
     
     
-    @Test.
+ //   @Test.
     method public void getPersonByExternalId():
         // given
         
