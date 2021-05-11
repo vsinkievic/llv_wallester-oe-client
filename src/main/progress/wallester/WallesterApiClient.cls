@@ -143,7 +143,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         if poJson:has("title")
         then ttPerson.title_name             = poJson:getCharacter("title").
         ttPerson.first_name             = poJson:getCharacter("first_name").
-        if poJson:has("title")
+        if poJson:has("middle_name")
         then ttPerson.middle_name            = poJson:getCharacter("middle_name").
         ttPerson.last_name              = poJson:getCharacter("last_name").
         ttPerson.birth_date             = poJson:GetDate("birth_date").
@@ -161,7 +161,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         if poJson:has("business_relationship_purpose")
         then ttPerson.business_relationship_purpose = poJson:getCharacter("business_relationship_purpose").
         ttPerson.risk_profile           = poJson:getCharacter("risk_profile").
-        if poJson:has("updated_at")
+        if poJson:has("loyalty_number")
         then ttPerson.loyalty_number         = poJson:getCharacter("loyalty_number").
         ttPerson.created_at             = poJson:GetDatetime("created_at").
         if poJson:has("updated_at")
@@ -199,9 +199,30 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical getPersonByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttPerson ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        empty temp-table ttPerson.        
+        
+        oResponse = _executeRequest("GET", "/v1/persons-by-external-id/" + pcExternalId, pcAuditUser).
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+                def var cResponseString as longchar no-undo.                                    
+                oResponseJson:Write(cResponseString, true).                                       
+                copy-lob from cResponseString to file "target/getPersonByExternalId-response.json".
+
+            _parsePerson(oResponseJson:GetJsonObject("person")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical getPersonById( input pcPersonID as character, input pcAuditUser as character, output TABLE for ttPerson ):
@@ -216,9 +237,9 @@ class wallester.WallesterApiClient implements WallesterApi:
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
 // for debug only
-                def var cResponseString as longchar no-undo.                                    
-                oResponseJson:Write(cResponseString, true).                                       
-                copy-lob from cResponseString to file "target/getPersonById-response.json".
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getPersonById-response.json".
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.

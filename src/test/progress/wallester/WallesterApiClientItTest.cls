@@ -152,7 +152,7 @@ class wallester.WallesterApiClientItTest:
     end method.
     
     
-    @Test.
+   // @Test.
     method public void getPersonById():
         // given
         
@@ -164,4 +164,19 @@ class wallester.WallesterApiClientItTest:
         temp-table ttPerson:write-json("file", "target/getPersonById.json", true).
         
     end method.
+    
+    
+    @Test.
+    method public void getPersonByExternalId():
+        // given
+        
+        // when
+        isOk = api:getPersonByExternalId("person_123", auditUser, output table ttPerson).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttPerson:write-json("file", "target/getPersonByExternalId.json", true).
+        
+    end method.
+    
 end class.
