@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="OpenEdge InjectABL Library" 
+	xmlns:ivy="antlib:org.apache.ivy.ant"
+	xmlns:pct="antlib:eu/rssw/pct" 
+	xmlns:extras="antlib:eu/rssw/pct/oedoc">
+    
+	<property name="appRoot" value="." />
+    <property name="projectRoot" value="${appRoot}" />
+	
+    <!-- Common, property-driven tasks are in build-common.xml (eg. doc, package, bundle) -->
+    <import file="ivy-common-1.0.xml"/>
+	
+	<!-- Builds/compiles the library -->
+	<target name="build" depends="ivy-retrieve,pct-init,cleanup">
+		<echo>Compile OpenEdge files</echo>
+		
+        <mkdir dir="${buildRoot}"/>
+        <mkdir dir="${buildRoot}/bin"/>
+        <mkdir dir="${buildRoot}/src"/>
+        <mkdir dir="${buildRoot}/preprocess"/>
+        <mkdir dir="${buildRoot}/resources"/>
+		
+	    <copy toDir="target/src/" flatten="false" includeemptydirs="false">
+	        <fileset dir="src/">
+	            <include name="**/*.i" />
+	        </fileset>
+	    </copy>
+
+       <copy toDir="target/bin/" flatten="false" includeemptydirs="false">
+            <fileset dir="src/">
+                <include name="**/*.i" />
+            </fileset>
+       </copy>
+
+       <copy toDir="target/resources/" flatten="false" includeemptydirs="false">
+            <fileset dir="src/main/resources/">
+                <include name="**/*" />
+            </fileset>
+        </copy>
+
+		<pct:compile dlcHome="${DLC}"
+                  graphicalMode="false"
+                  destDir="${buildRoot}/bin" 
+                  cpStream="UTF-8" 
+                  preprocessDir="${buildRoot}/preprocess"
+                  forceCompile="true">
+			
+			<propath>
+                <pathelement path="${buildRoot}/bin"/>
+                <pathelement path="${projectRoot}/src/main/progress"/>
+		        <pathelement location="${env.DLC}/tty/netlib/OpenEdge.Net.pl" />
+			</propath>
+			
+			<fileset dir="${projectRoot}/src/main/progress">
+				<include name="**/*.p" />
+				<include name="**/*.w" />
+				<include name="**/*.cls" />
+			</fileset>
+			
+			<!--
+			<fileset dir="${projectRoot}/src/test/progress">
+				<include name="**/*.p" />
+				<include name="**/*.w" />
+				<include name="**/*.cls" />
+			</fileset>
+			-->
+		</pct:compile>
+	</target>
+
+</project>

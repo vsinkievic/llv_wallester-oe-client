@@ -1,0 +1,27 @@
+<ivy-module version="2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd"
+	 xmlns:e="http://ant.apache.org/ivy/extra">
+	
+	<info organisation="com.bpmid" module="wallesterOEclient" revision="0.1">
+       <ivyauthor name="Valdemar Sinkievič, valdemar@bpm-id.com" url="http://www.bpm-id.com"/>
+	   <description>Wallester API client library</description>
+	</info>
+	
+	<publications>
+	   <artifact name="pom" type="pom" ext="xml" />
+		<artifact name="wallesterOEclient" ext="zip" />
+	</publications>
+	
+	<dependencies>
+<!-- 		<dependency org="bfv" name="spring4oe" rev="1.0.0" transitive="true" > -->
+<!-- 		    <artifact name="spring4oe" e:classifier="pl" ext="pl" /> -->
+<!-- 		</dependency> -->
+        <dependency org="com.bpmid" name="oe-commons" rev="1.2.+">
+            <artifact name="oe-commons" ext="zip" />
+        </dependency>
+        <dependency org="com.bpmid" name="jwtoe" rev="1.0.+">
+            <artifact name="jwtoe" ext="zip" />
+        </dependency>
+	</dependencies>
+</ivy-module>

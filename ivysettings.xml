@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-settings>
+  <settings defaultResolver="artifactory" />
+  <!--Authentication required for publishing (deployment). 'Artifactory Realm' is the realm used by Artifactory so don't change it.-->
+  <credentials host="titan.lateko.lt" realm="Artifactory Realm" username="anonymous" />
+  <resolvers>
+    <url name="artifactory-release">
+        <artifact pattern=
+          "http://titan.lateko.lt:8081/artifactory/oe-release/[organization]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+        <ivy pattern="http://titan.lateko.lt:8081/artifactory/oe-release/[organization]/[module]/[revision]/ivy-[revision].xml" />
+    </url>
+    <url name="artifactory-snapshots">
+        <artifact pattern=
+          "http://titan.lateko.lt:8081/artifactory/oe-snapshots/[organization]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+        <ivy pattern="http://titan.lateko.lt:8081/artifactory/oe-snapshots/[organization]/[module]/[revision]/ivy-[revision].xml" />
+    </url>
+    <chain name="artifactory">
+        <url ref="artifactory-release" />
+        <url ref="artifactory-snapshots" />
+    </chain>
+  </resolvers>
+</ivy-settings>
