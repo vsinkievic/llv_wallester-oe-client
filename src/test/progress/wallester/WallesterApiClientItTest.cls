@@ -68,6 +68,12 @@ class wallester.WallesterApiClientItTest:
     method public void setUp(  ):
         
         isOk = ?.
+        empty temp-table ttPerson.
+        empty temp-table ttAccount.
+        empty temp-table ttAccountRequest.
+        empty temp-table ttCard.
+        empty temp-table ttCardLimits.
+        empty temp-table ttAccountLimits.
         return.
 
     end method.
@@ -145,4 +151,17 @@ class wallester.WallesterApiClientItTest:
        temp-table ttPerson:write-json("file", "target/createPerson.json", true).
     end method.
     
+    
+    @Test.
+    method public void getPersonById():
+        // given
+        
+        // when
+        isOk = api:getPersonById("d4d87e9f-d556-404f-abbd-905f6473b868", auditUser, output table ttPerson).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttPerson:write-json("file", "target/getPersonById.json", true).
+        
+    end method.
 end class.

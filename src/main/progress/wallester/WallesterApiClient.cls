@@ -116,12 +116,13 @@ class wallester.WallesterApiClient implements WallesterApi:
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-            _parsePerson(oResponseJson:GetJsonObject("person")).
-
 // for debug only
                 def var cResponseString as longchar no-undo.                                    
                 oResponseJson:Write(cResponseString, true).                                       
                 copy-lob from cResponseString to file "target/createPerson-response.json".
+
+            _parsePerson(oResponseJson:GetJsonObject("person")).
+
             return true.
         end.
         undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -139,9 +140,11 @@ class wallester.WallesterApiClient implements WallesterApi:
         ttPerson.id = poJson:GetCharacter("id").
         ttPerson.personal_number = poJson:GetCharacter("personal_number").
         ttPerson.personal_number_issuer = poJson:getCharacter("personal_number_issuer").
-        ttPerson.title_name             = poJson:getCharacter("title").
+        if poJson:has("title")
+        then ttPerson.title_name             = poJson:getCharacter("title").
         ttPerson.first_name             = poJson:getCharacter("first_name").
-        ttPerson.middle_name            = poJson:getCharacter("middle_name").
+        if poJson:has("title")
+        then ttPerson.middle_name            = poJson:getCharacter("middle_name").
         ttPerson.last_name              = poJson:getCharacter("last_name").
         ttPerson.birth_date             = poJson:GetDate("birth_date").
         ttPerson.birth_country_code     = poJson:GetCharacter("birth_country_code").
@@ -151,15 +154,20 @@ class wallester.WallesterApiClient implements WallesterApi:
         ttPerson.external_id            = poJson:getCharacter("external_id").
         ttPerson.residence_country_code = poJson:getCharacter("residence_country_code").
         ttPerson.is_represented_by_someone_else = poJson:GetLogical("is_represented_by_someone_else").
-        ttPerson.is_beneficial_owner    = poJson:GetLogical("is_beneficiary_owner").
+        ttPerson.is_beneficial_owner    = poJson:GetLogical("is_beneficial_owner").
         ttPerson.is_pep                 = poJson:getLogical("is_politically_exposed_person").
-        ttPerson.pep_explanation        = poJson:getCharacter("politically_exposed_person_explanation").
-        ttPerson.business_relationship_purpose = poJson:getCharacter("business_relationship_purpose").
+        if poJson:has("politically_exposed_person_explanation")
+        then ttPerson.pep_explanation        = poJson:getCharacter("politically_exposed_person_explanation").
+        if poJson:has("business_relationship_purpose")
+        then ttPerson.business_relationship_purpose = poJson:getCharacter("business_relationship_purpose").
         ttPerson.risk_profile           = poJson:getCharacter("risk_profile").
-        ttPerson.loyalty_number         = poJson:getCharacter("loyalty_number").
+        if poJson:has("updated_at")
+        then ttPerson.loyalty_number         = poJson:getCharacter("loyalty_number").
         ttPerson.created_at             = poJson:GetDatetime("created_at").
-        ttPerson.updated_at             = poJson:getDatetime("updated_at").
-        ttPerson.deactivated_at         = poJson:getDatetime("deactivated_at").
+        if poJson:has("updated_at")
+        then ttPerson.updated_at             = poJson:getDatetime("updated_at").
+        if poJson:has("deactivated_at")
+        then ttPerson.deactivated_at         = poJson:getDatetime("deactivated_at").
         
         finally:
             if valid-object(poJson) then delete object poJson.            
@@ -197,9 +205,30 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical getPersonById( input pcPersonID as character, input pcAuditUser as character, output TABLE for ttPerson ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        empty temp-table ttPerson.        
+        
+        oResponse = _executeRequest("GET", "/v1/persons/" + pcPersonID, pcAuditUser).
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+                def var cResponseString as longchar no-undo.                                    
+                oResponseJson:Write(cResponseString, true).                                       
+                copy-lob from cResponseString to file "target/getPersonById-response.json".
+
+            _parsePerson(oResponseJson:GetJsonObject("person")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical getPersonCards( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttCard ):
@@ -284,7 +313,7 @@ class wallester.WallesterApiClient implements WallesterApi:
                                           :ContentType("application/json; charset=UTF-8")
                                           :Request.
             
-            otherwise undo, throw new AppError(subst("Unsupported requestType=&1 for &2", poRequestJson, pcEndpointUrl), 0).
+            otherwise undo, throw new AppError(subst("Unsupported requestType=&1 for &2", pcRequestType, pcEndpointUrl), 0).
         end case.
         
         cRequestBody = poRequestJson:getJsonText().
@@ -339,8 +368,77 @@ class wallester.WallesterApiClient implements WallesterApi:
             if valid-object(oResponseClaims)         then delete object oResponseClaims.
         end finally.
     end method.
-    
-    
+
+    method protected IHttpResponse _executeRequest(pcRequestType as char, pcEndpointUrl as char, pcAuditUser as char): 
+        def var oRequest as IHttpRequest no-undo.
+        def var oResponse as IHttpResponse no-undo.        
+        def var oJsonObject as JsonObject no-undo.
+        def var oJsonReqObject as JsonObject no-undo.
+        def var oRequestAuthHeader as HttpHeader no-undo.
+        def var oRequestUserHeader as HttpHeader no-undo.
+        def var oResponseAuthHeader as HttpHeader no-undo.
+        def var cJwtToken as char no-undo.
+        def var oResponseClaims as JsonObject no-undo.
+        
+ //       message wallesterUrl + pcEndpointUrl view-as alert-box.
+        case pcRequestType:
+            when "GET" 
+            then oRequest = RequestBuilder:Get(wallesterUrl + pcEndpointUrl):AcceptJson()
+                                          :ContentType("application/json; charset=UTF-8")
+                                          :Request.
+            
+            otherwise undo, throw new AppError(subst("Unsupported requestType=&1 for &2", pcRequestType, pcEndpointUrl), 0).
+        end case.
+        
+        cJwtToken = Jwt:builder()
+                       :setIssuer(this-object:issuerId)
+                       :setAudience(this-object:audienceId)
+                       :setExpiresInSeconds(60)
+                       :setSubject("api-request")
+             //          :setClaim("rbh", _calcRequestBodyHash(""))
+                       :signWithHS256Key(this-object:latekoSecret)
+                       :compact()
+                       .
+        if not valid-object(moSourceTypeHeader)
+        then moSourceTypeHeader = HttpHeaderBuilder:Build('X-Audit-Source-Type'):Value(this-object:auditSourceType):Header.
+        oRequest:setHeader(moSourceTypeHeader).
+        if not valid-object(moProductCodeHeader)
+        then moProductCodeHeader = HttpHeaderBuilder:Build('X-Product-Code'):Value(this-object:productCode):Header.
+        oRequest:setHeader(moProductCodeHeader).
+     
+        oRequestAuthHeader = HttpHeaderBuilder:Build('Authorization'):Value(substitute("Bearer &1", cJwtToken)):Header.
+        oRequest:SetHeader(oRequestAuthHeader).
+        oRequestUserHeader = HttpHeaderBuilder:Build('X-Audit-User-Id'):Value(pcAuditUser):Header.
+        oRequest:SetHeader(oRequestUserHeader).
+        
+        oResponse = ClientBuilder:Build():Client:Execute(oRequest).
+
+        if oResponse:statusCode = 401
+        then undo, throw new AppError("Unauthorized!", 0).
+        if oResponse:StatusCode >= 200 and oResponse:StatusCode < 300 and valid-object(oResponse:entity)
+        then do:
+            def var cReceivedToken as char no-undo.
+            oResponseAuthHeader = oResponse:GetHeader("Authorization").
+            if oResponseAuthHeader:value begins "Bearer "
+            then do: 
+                cReceivedToken = entry(2, oResponseAuthHeader:Value, " ").
+                oResponseClaims = Jwt:parseBuilder()
+                                     :setSigningKeyHS256(this-object:latekoSecret)
+                                     :parseClaimsJws(cReceivedToken).
+            end.
+        end.
+        else undo, throw new AppError(subst("&1 (&2 &3 FAILED - status: &4)",_extractErrorMessage(oResponse:Entity), pcRequestType, pcEndpointUrl, oResponse:StatusCode), 1).
+        
+        return oResponse.
+        
+        finally:
+            if valid-object(oRequest)                then delete object oRequest.
+            if valid-object(oRequestAuthHeader)      then delete object oRequestAuthHeader.
+            if valid-object(oRequestUserHeader)      then delete object oRequestUserHeader.
+            if valid-object(oResponseAuthHeader)     then delete object oResponseAuthHeader.
+            if valid-object(oResponseClaims)         then delete object oResponseClaims.
+        end finally.
+    end method.
     
 
     /*------------------------------------------------------------------------------
