@@ -1,5 +1,4 @@
 def temp-table tt{&prefix}AccountRequest no-undo
-    field id                               as char
     field person_id                        as char
     field external_id                      as char
     field account_name                     as char

@@ -186,7 +186,7 @@ class wallester.WallesterApiClientItTest:
     end method.
     
     
-    @Test.
+ //   @Test.
     method public void getPersonById():
         // given
         
@@ -213,4 +213,89 @@ class wallester.WallesterApiClientItTest:
         
     end method.
     
+//    @Test.
+    method public void createAccount():
+        // given
+        create ttAccountRequest.
+        ttAccountRequest.person_id = "d4d87e9f-d556-404f-abbd-905f6473b868".
+        ttAccountRequest.external_id = "XX-000002".
+        ttAccountRequest.account_name  = "XX-000002".
+        ttAccountRequest.currency_code = "EUR".
+        ttAccountRequest.credit_limit = 150.
+        ttAccountRequest.used_credit = 10.01.
+
+        ttAccountRequest.lim_daily_purchase = 99.99.
+        ttAccountRequest.lim_daily_withdrawal = 199.99.
+        ttAccountRequest.lim_daily_internet_purchase = 19.99.
+        ttAccountRequest.lim_daily_contactless_purchase = 9.99.
+        ttAccountRequest.lim_monthly_purchase = 999.99.
+        ttAccountRequest.lim_monthly_withdrawal = 899.99.
+        ttAccountRequest.lim_monthly_internet_purchase = 799.99.
+        ttAccountRequest.lim_monthly_contactless_purchase = 399.99.
+                
+        // when
+        isOk = api:createAccount(table ttAccountRequest, auditUser, output table ttAccount).
+        
+        // then
+        Assert:isTrue(isOK).
+        temp-table ttAccount:write-json("file", "target/createAccount.json", true).
+        
+    end method.
+    
+    
+   // @Test.
+    method public void getAccountByExternalId():
+        // given
+        
+        // when
+        isOk = api:getAccountByExternalId("XX-000001", auditUser, output table ttAccount).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttAccount:write-json("file", "target/getAccountByExternalId.json", true).
+        
+    end method.
+
+   // @Test.
+    method public void getAccount():
+        // given
+        
+        // when
+        isOk = api:getAccountById("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", auditUser, output table ttAccount).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttAccount:write-json("file", "target/getAccountById.json", true).
+        
+    end method.
+ 
+ 
+   // @Test.
+    method public void getPersonAccounts():
+        // given
+        
+        // when
+        isOk = api:getPersonAccounts("d4d87e9f-d556-404f-abbd-905f6473b868", auditUser, output table ttAccount).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttAccount:write-json("file", "target/getPersonAccounts.json", true).
+        
+    end method.
+
+
+    @Test.
+    method public void getAccounts():
+        // given
+        create ttAccount. ttAccount.id = "45d21fd7-70b2-4600-ade1-976d5cd1b0a5".
+        create ttAccount. ttAccount.id = "ec74c22f-37e9-4cae-8113-f5766d5ef1e0".
+        
+        // when
+        isOk = api:getAccounts(input-output table ttAccount, auditUser).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttAccount:write-json("file", "target/getAccounts.json", true).
+        
+    end method.    
 end class.

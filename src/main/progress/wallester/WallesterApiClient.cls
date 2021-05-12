@@ -20,6 +20,7 @@ using OpenEdge.Net.HTTP.HttpHeader from propath.
 using OpenEdge.Net.HTTP.HttpHeaderBuilder from propath.
 using jwtoe.Jwt from propath.
 using wallester.WallesterApi from propath.
+using Progress.Json.ObjectModel.JsonArray from propath.
 
 block-level on error undo, throw.
 
@@ -73,7 +74,62 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical createAccount( input TABLE for ttAccountRequest, input pcAuditUser as character, output TABLE for ttAccount ):
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        def var oRequestJson as JsonObject no-undo.
+        def var oAccountJson as JsonObject no-undo.
+        def var oLimitsJson  as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        
+        find ttAccountRequest no-error.
+        if not available ttAccountRequest
+        then undo, throw new AppError("Provide ttAccountRequest record!", 0).
+        
+        oAccountJson = new JsonObject().
+        oAccountJson:add("person_id",                   ttAccountRequest.person_id).
+        oAccountJson:add("external_id",                 ttAccountRequest.external_id).
+        oAccountJson:add("name",                        ttAccountRequest.account_name).
+        oAccountJson:add("currency_code",               ttAccountRequest.currency_code).
+        oAccountJson:add("credit_limit",                ttAccountRequest.credit_limit).
+        oAccountJson:add("used_credit",                 ttAccountRequest.used_credit).
+        
+        oLimitsJson = new JsonObject().
+        oLimitsJson:add("daily_purchase",               ttAccountRequest.lim_daily_purchase).
+        oLimitsJson:add("daily_withdrawal",             ttAccountRequest.lim_daily_withdrawal).
+        oLimitsJson:add("daily_internet_purchase",      ttAccountRequest.lim_daily_internet_purchase).
+        oLimitsJson:add("daily_contactless_purchase",   ttAccountRequest.lim_daily_contactless_purchase).
+        oLimitsJson:add("monthly_purchase",             ttAccountRequest.lim_monthly_purchase).
+        oLimitsJson:add("monthly_withdrawal",           ttAccountRequest.lim_monthly_withdrawal).
+        oLimitsJson:add("monthly_internet_purchase",    ttAccountRequest.lim_monthly_internet_purchase).
+        oLimitsJson:add("monthly_contactless_purchase", ttAccountRequest.lim_monthly_contactless_purchase).
+        oAccountJson:add("limits", oLimitsJson).
+        oRequestJson = new JsonObject().
+        oRequestJson:add("person", oAccountJson).
+        empty temp-table ttAccountRequest.
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("POST", "/v1/accounts", pcAuditUser, oAccountJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/createAccount-response.json".
+
+            _parseAccount(oResponseJson:GetJsonObject("account")).
+
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to create account: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oAccountJson)   then delete object oAccountJson.
+            if valid-object(oLimitsJson)    then delete object oLimitsJson.
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical createPerson( input-output TABLE for ttPerson, input pcAuditUser as character ):
@@ -174,16 +230,120 @@ class wallester.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
-    method public logical getAccountByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttAccount ):
+    method protected void _parseAccount (poJson as JsonObject):
+        def var oLimitsJson as JsonObject no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        create ttAccount.
+        ttAccount.id                  = poJson:GetCharacter("id").
+        ttAccount.person_id           = poJson:GetCharacter("person_id").
+        ttAccount.external_id         = poJson:getCharacter("external_id").
+        ttAccount.account_name        = poJson:getCharacter("name").
+        ttAccount.currency_code       = poJson:getCharacter("currency_code").
+        ttAccount.account_status      = poJson:GetCharacter("status").      
+          
+        ttAccount.credit_limit        = poJson:getDecimal("credit_limit").
+        ttAccount.used_credit         = poJson:getDecimal("used_credit").
+        ttAccount.balance             = poJson:getDecimal("balance").
+        ttAccount.available_amount    = poJson:getDecimal("available_amount").
+        ttAccount.blocked_amount      = poJson:getDecimal("blocked_amount").
+        
+        ttAccount.created_at          = poJson:GetDatetime("created_at").
+        if poJson:has("updated_at")
+        then ttAccount.updated_at     = poJson:getDatetime("updated_at").
+        if poJson:has("closed_at")
+        then ttAccount.closed_at      = poJson:getDatetime("closed_at").
+        if poJson:has("closed_by")
+        then ttAccount.closed_by      = poJson:GetCharacter("closed_by").
+        if poJson:has("close_reason")
+        then ttAccount.close_reason   = poJson:getCharacter("close_reason").
+        
+        if poJson:has("limits")
+        then do:
+            oLimitsJson = poJson:GetJsonObject("limits").
+            ttAccount.lim_daily_purchase               = oLimitsJson:getDecimal("daily_purchase").
+            ttAccount.lim_daily_withdrawal             = oLimitsJson:getDecimal("daily_withdrawal").
+            ttAccount.lim_daily_internet_purchase      = oLimitsJson:getDecimal("daily_internet_purchase").
+            ttAccount.lim_daily_contactless_purchase   = oLimitsJson:getDecimal("daily_contactless_purchase").
+            ttAccount.lim_monthly_purchase             = oLimitsJson:getDecimal("monthly_purchase").
+            ttAccount.lim_monthly_withdrawal           = oLimitsJson:getDecimal("monthly_withdrawal").
+            ttAccount.lim_monthly_internet_purchase    = oLimitsJson:getDecimal("monthly_internet_purchase").
+            ttAccount.lim_monthly_contactless_purchase = oLimitsJson:getDecimal("monthly_contactless_purchase").
+        end.
 
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+            if valid-object(oLimitsJson) then delete object oLimitsJson.         
+        end finally.
+    end method.
+
+
+    method protected void _parseAccounts (poJson as JsonArray):
+        def var oAccountJson as JsonObject no-undo.
+        def var i as int no-undo.
+        
+        do i = 1 to poJson:Length:
+            oAccountJson = poJson:GetJsonObject(i).
+            _parseAccount(oAccountJson).
+        end.
+        
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+            if valid-object(oAccountJson) then delete object oAccountJson.         
+        end finally.
+    end method.
+
+    method public logical getAccountByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttAccount ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("GET", "/v1/accounts-by-external-id/" + pcExternalId, pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getAccountByExternalId-response.json".
+
+            _parseAccount(oResponseJson:GetJsonObject("account")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get account by external ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical getAccountById( input pcAccountId as character, input pcAuditUser as character, output TABLE for ttAccount ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("GET", "/v1/accounts/" + pcAccountId, pcAuditUser).
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getAccountById-response.json".
+
+            _parseAccount(oResponseJson:GetJsonObject("account")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get account by ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical getAccountCards( input pcAccountId as character, input pcAuditUser as character, output TABLE for ttCard ):
@@ -192,10 +352,72 @@ class wallester.WallesterApiClient implements WallesterApi:
 
     end method.
 
-    method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
+    method public logical getAccounts( input-output TABLE for ttAccount, input pcAuditUser as character ):
+        def var oRequestJson  as JsonObject no-undo.
+        def var oIdsJson      as JsonArray no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        if not can-find(first ttAccount)
+        then return true. // there is nothing to do.
+        
+        oIdsJson = new JsonArray().
+        for each ttAccount: 
+            oIdsJson:add(ttAccount.id).
+        end.
+        oRequestJson = new JsonObject().
+        oRequestJson:add("ids", oIdsJson).
+        
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("POST", "/v1/accounts-by-ids", pcAuditUser, oRequestJson).
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getAccounts-response.json".
+
+            _parseAccounts(oResponseJson:GetJsonArray("accounts")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get accounts: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oIdsJson)       then delete object oIdsJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    end method.
+
+    method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("GET", subst("/v1/persons/&1/accounts", pcPersonId), pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/getPersonAccounts-response.json".
+
+            _parseAccounts(oResponseJson:GetJsonArray("accounts")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get account by external ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical getPersonByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttPerson ):
@@ -338,7 +560,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         end case.
         
         cRequestBody = poRequestJson:getJsonText().
-        message string(cRequestBody) view-as alert-box title "Request JSON".
+    //    message string(cRequestBody) view-as alert-box title "Request JSON".
         cJwtToken = Jwt:builder()
                        :setIssuer(this-object:issuerId)
                        :setAudience(this-object:audienceId)

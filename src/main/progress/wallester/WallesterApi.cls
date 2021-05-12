@@ -30,6 +30,7 @@ interface wallester.WallesterApi:
   method public logical createAccount(input table ttAccountRequest, pcAuditUser as char, output table ttAccount).
   method public logical getAccountById(pcAccountId as char, pcAuditUser as char, output table ttAccount).
   method public logical getAccountByExternalId(pcExternalId as char, pcAuditUser as char, output table ttAccount).
+  method public logical getAccounts(input-output table ttAccount, pcAuditUser as char).
   method public logical adjustAccountBalance(pcAccountId as char, pcExternalId as char, pdAmount as dec, pcDescription as char, pcAuditUser as char, output table ttAccount).
   method public logical getAccountCards(pcAccountId as char, pcAuditUser as char, output table ttCard).
   method public logical updateAccountCreditLimit(pcAccountId as char, pdNewLimit as dec, pdDescription as char, pcAuditUser as char, output table ttAccount).
