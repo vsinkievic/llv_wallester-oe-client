@@ -31,6 +31,7 @@ class wallester.WallesterApiClient implements WallesterApi:
   {wallester/ttAccountRequest.i}
   {wallester/ttCard.i}
   {wallester/ttCardLimits.i}
+  {wallester/ttCardRequest.i}
   {wallester/ttPerson.i}
   
       
@@ -68,6 +69,52 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical adjustAccountBalance( input pcAccountId as character, input pcExternalId as character, input pdAmount as decimal, input pcDescription as character, input pcAuditUser as character, output TABLE for ttAccount ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("external_id", pcExternalId).
+        oRequestJson:add("amount",      pdAmount).
+        oRequestJson:add("description", pcDescription).
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("PATCH", subst("/v1/accounts/&1/balance", pcAccountId), pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+//                def var cResponseString as longchar no-undo.                                    
+//                oResponseJson:Write(cResponseString, true).                                       
+//                copy-lob from cResponseString to file "target/createAccount-response.json".
+
+            _parseAccount(oResponseJson:GetJsonObject("account")).
+
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to adjustAccountBalance: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    end method.
+
+    method public logical blockCard( input pcCardId as character, input peBlockType as wallester.CardBlockType, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical changePin( input pcCardId as character, input pcNewEncodedPin as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical closeCard( input pcCardId as character, input peCloseReason as wallester.CardCloseReason, input pcAuditUser as character, output TABLE for ttCard ):
         
         undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
 
@@ -75,7 +122,6 @@ class wallester.WallesterApiClient implements WallesterApi:
 
     method public logical createAccount( input TABLE for ttAccountRequest, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oRequestJson as JsonObject no-undo.
-        def var oAccountJson as JsonObject no-undo.
         def var oLimitsJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -84,13 +130,13 @@ class wallester.WallesterApiClient implements WallesterApi:
         if not available ttAccountRequest
         then undo, throw new AppError("Provide ttAccountRequest record!", 0).
         
-        oAccountJson = new JsonObject().
-        oAccountJson:add("person_id",                   ttAccountRequest.person_id).
-        oAccountJson:add("external_id",                 ttAccountRequest.external_id).
-        oAccountJson:add("name",                        ttAccountRequest.account_name).
-        oAccountJson:add("currency_code",               ttAccountRequest.currency_code).
-        oAccountJson:add("credit_limit",                ttAccountRequest.credit_limit).
-        oAccountJson:add("used_credit",                 ttAccountRequest.used_credit).
+        oRequestJson = new JsonObject().
+        oRequestJson:add("person_id",                   ttAccountRequest.person_id).
+        oRequestJson:add("external_id",                 ttAccountRequest.external_id).
+        oRequestJson:add("name",                        ttAccountRequest.account_name).
+        oRequestJson:add("currency_code",               ttAccountRequest.currency_code).
+        oRequestJson:add("credit_limit",                ttAccountRequest.credit_limit).
+        oRequestJson:add("used_credit",                 ttAccountRequest.used_credit).
         
         oLimitsJson = new JsonObject().
         oLimitsJson:add("daily_purchase",               ttAccountRequest.lim_daily_purchase).
@@ -101,13 +147,11 @@ class wallester.WallesterApiClient implements WallesterApi:
         oLimitsJson:add("monthly_withdrawal",           ttAccountRequest.lim_monthly_withdrawal).
         oLimitsJson:add("monthly_internet_purchase",    ttAccountRequest.lim_monthly_internet_purchase).
         oLimitsJson:add("monthly_contactless_purchase", ttAccountRequest.lim_monthly_contactless_purchase).
-        oAccountJson:add("limits", oLimitsJson).
-        oRequestJson = new JsonObject().
-        oRequestJson:add("person", oAccountJson).
+        oRequestJson:add("limits", oLimitsJson).
         empty temp-table ttAccountRequest.
         empty temp-table ttAccount.        
         
-        oResponse = _executeRequest("POST", "/v1/accounts", pcAuditUser, oAccountJson).
+        oResponse = _executeRequest("POST", "/v1/accounts", pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
@@ -124,12 +168,17 @@ class wallester.WallesterApiClient implements WallesterApi:
         undo, throw new AppError(subst("Failed to create account: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
 
         finally:
-            if valid-object(oAccountJson)   then delete object oAccountJson.
             if valid-object(oLimitsJson)    then delete object oLimitsJson.
             if valid-object(oRequestJson)   then delete object oRequestJson.
             if valid-object(oResponseJson)  then delete object oResponseJson.
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
+    end method.
+
+    method public logical createCard( input TABLE for ttCardRequest, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
     end method.
 
     method public logical createPerson( input-output TABLE for ttPerson, input pcAuditUser as character ):
@@ -292,6 +341,126 @@ class wallester.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method protected void _parseCard (poJson as JsonObject):
+        def var oLimitsJson as JsonObject no-undo.
+        def var o3DsecureJson as JsonObject no-undo.
+        def var oDeliveryJson as JsonObject no-undo.
+        def var oSecurityJson as JsonObject no-undo.
+        
+        create ttCard.
+        ttCard.id                  = poJson:GetCharacter("id").
+        if poJson:has("predecessor_card_id")
+        then ttCard.predecessor_card_id = poJson:GetCharacter("predecessor_card_id").
+        ttCard.account_id          = poJson:getCharacter("account_id").
+        ttCard.person_id           = poJson:GetCharacter("person_id").
+        ttCard.external_id         = poJson:getCharacter("external_id").
+        ttCard.card_type           = poJson:getCharacter("type").
+        ttCard.card_name           = poJson:getCharacter("name").
+        ttCard.masked_card_number  = poJson:getCharacter("masked_card_number").
+        if (poJson:has("reference_number"))
+        then ttCard.reference_number    = poJson:getCharacter("reference_number").
+        ttCard.expiry_date         = poJson:GetDatetime("expiry_date").
+        ttCard.card_status         = poJson:GetCharacter("status").    
+        ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
+        ttCard.is_enrolled_for_3ds = poJson:getLogical("is_enrolled_for_3d_secure").
+        ttCard.is_3ds_activated    = poJson:getLogical("is_card_3d_secure_activated").
+        if poJson:has("renew_automatically")
+        then ttCard.renew_automatically = poJson:getLogical("renew_automatically").
+        
+        if poJson:has("personalization_product_code")
+        then ttCard.personalization_product_code = poJson:getCharacter("personalization_product_code").  
+        if poJson:has("card_metadata_profile_id")
+        then ttCard.card_metadata_profile_id = poJson:getCharacter("card_metadata_profile_id").  
+        if poJson:has("block_type")
+        then ttCard.block_type     = poJson:getCharacter("block_type").
+        if poJson:has("blocked_at")
+        then ttCard.blocked_at     = poJson:GetDatetime("blocked_at").
+        ttCard.created_at          = poJson:GetDatetime("created_at").
+        if poJson:has("activated_at")
+        then ttCard.activated_at   = poJson:getDatetime("activated_at").
+        if poJson:has("updated_at")
+        then ttCard.updated_at     = poJson:getDatetime("updated_at").
+        if poJson:has("closed_at")
+        then ttCard.closed_at      = poJson:getDatetime("closed_at").
+        if poJson:has("closed_by")
+        then ttCard.closed_by      = poJson:GetCharacter("closed_by").
+        if poJson:has("close_reason")
+        then ttCard.close_reason   = poJson:getCharacter("close_reason").
+        
+        if poJson:has("limits")
+        then do:
+            oLimitsJson = poJson:GetJsonObject("limits").
+            ttCard.lim_daily_purchase               = oLimitsJson:getDecimal("daily_purchase").
+            ttCard.lim_daily_withdrawal             = oLimitsJson:getDecimal("daily_withdrawal").
+            ttCard.lim_daily_internet_purchase      = oLimitsJson:getDecimal("daily_internet_purchase").
+            ttCard.lim_daily_contactless_purchase   = oLimitsJson:getDecimal("daily_contactless_purchase").
+            ttCard.lim_monthly_purchase             = oLimitsJson:getDecimal("monthly_purchase").
+            ttCard.lim_monthly_withdrawal           = oLimitsJson:getDecimal("monthly_withdrawal").
+            ttCard.lim_monthly_internet_purchase    = oLimitsJson:getDecimal("monthly_internet_purchase").
+            ttCard.lim_monthly_contactless_purchase = oLimitsJson:getDecimal("monthly_contactless_purchase").
+            ttCard.lim_trn_purchase                 = oLimitsJson:getDecimal("transaction_purchase").
+            ttCard.lim_trn_withdrawal               = oLimitsJson:getDecimal("transaction_withdrawal").
+            ttCard.lim_trn_internet_purchase        = oLimitsJson:getDecimal("transaction_internet_purchase").
+            ttCard.lim_trn_contactless_purchase     = oLimitsJson:getDecimal("transaction_contactless_purchase").
+        end.
+
+        if poJson:has("3d_secure_settings")
+        then do:
+            o3DsecureJson = poJson:GetJsonObject("3d_secure_settings").
+            ttCard.sec_3ds_type          = o3DsecureJson:GetCharacter("type").
+            ttCard.sec_3ds_mobile        = o3DsecureJson:GetCharacter("mobile").
+            ttCard.sec_3ds_language_code = o3DsecureJson:GetCharacter("language_code").
+            ttCard.sec_3ds_password      = o3DsecureJson:GetCharacter("password").
+        end.
+
+        if poJson:has("delivery_address")
+        then do:
+            oDeliveryJson = poJson:GetJsonObject("delivery_address").
+            if oDeliveryJson:has("first_name")
+            then ttCard.delivery_first_name      = oDeliveryJson:GetCharacter("first_name").
+            if oDeliveryJson:has("last_name")
+            then ttCard.delivery_last_name       = oDeliveryJson:GetCharacter("last_name").
+            if oDeliveryJson:has("company_name")
+            then ttCard.delivery_company_name    = oDeliveryJson:GetCharacter("company_name").
+            if oDeliveryJson:has("address1")
+            then ttCard.delivery_address1        = oDeliveryJson:GetCharacter("address1").
+            if oDeliveryJson:has("address2")
+            then ttCard.delivery_address2        = oDeliveryJson:GetCharacter("address2").
+            if oDeliveryJson:has("postal_code")
+            then ttCard.delivery_postal_code     = oDeliveryJson:GetCharacter("postal_code").
+            if oDeliveryJson:has("city")
+            then ttCard.delivery_city            = oDeliveryJson:GetCharacter("city").
+            if oDeliveryJson:has("country_code")
+            then ttCard.delivery_country_code    = oDeliveryJson:GetCharacter("country_code").
+            if oDeliveryJson:has("dispatch_method")
+            then ttCard.delivery_dispatch_method = oDeliveryJson:GetCharacter("dispatch_method").
+            if oDeliveryJson:has("phone")
+            then ttCard.delivery_phone           = oDeliveryJson:GetCharacter("phone").
+        end.
+
+        if poJson:has("security")
+        then do:
+            oSecurityJson = poJson:GetJsonObject("security").
+            ttCard.sec_contactless_enabled       = oSecurityJson:getLogical("contactless_enabled").
+            ttCard.sec_widhdrawal_enabled        = oSecurityJson:getLogical("withdrawal_enabled").
+            ttCard.sec_internet_purchase_enabled = oSecurityJson:getLogical("internet_purchase_enabled").
+        end.
+
+        finally:
+            if valid-object(poJson)        then delete object poJson.   
+            if valid-object(oLimitsJson)   then delete object oLimitsJson.         
+            if valid-object(o3DsecureJson) then delete object o3DsecureJson.         
+            if valid-object(oDeliveryJson) then delete object oDeliveryJson.         
+            if valid-object(oSecurityJson) then delete object oSecurityJson.         
+        end finally.
+    end method.
+
+    method public logical enrolCardFor3Dsecure( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public logical getAccountByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -393,6 +562,45 @@ class wallester.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method public logical getCardByExternalId( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical getCardById( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        
+        empty temp-table ttAccount.        
+        
+        oResponse = _executeRequest("GET", "/v1/cards/" + pcCardId, pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+// for debug only
+                def var cResponseString as longchar no-undo.                                    
+                oResponseJson:Write(cResponseString, true).                                       
+                copy-lob from cResponseString to file "target/getCardById-response.json".
+
+            _parseCard(oResponseJson:GetJsonObject("card")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get card by ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    end method.
+
+    method public logical getListOfCards( input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -480,6 +688,12 @@ class wallester.WallesterApiClient implements WallesterApi:
 
     end method.
 
+    method public logical linkCardToAccount( input pcCardId as character, input pcAccountIs as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public char ping(pcMessage as char):
         
         DEFINE VARIABLE oResponse AS IHttpResponse NO-UNDO.        
@@ -547,6 +761,11 @@ class wallester.WallesterApiClient implements WallesterApi:
         
 //        message wallesterUrl + pcEndpointUrl view-as alert-box.
         case pcRequestType:
+            when "PATCH" 
+            then oRequest = RequestBuilder:Patch(wallesterUrl + pcEndpointUrl, poRequestJson):AcceptJson()
+                                          :ContentType("application/json; charset=UTF-8")
+                                          :Request.
+
             when "POST" 
             then oRequest = RequestBuilder:Post(wallesterUrl + pcEndpointUrl, poRequestJson):AcceptJson()
                                           :ContentType("application/json; charset=UTF-8")
@@ -707,12 +926,15 @@ class wallester.WallesterApiClient implements WallesterApi:
                     oBody = oJsonObject:GetJsonObject("body").
                     cNames = oBody:GetNames().
                     return oBody:getCharacter(cNames[1]).
-                    
 //                    return oJsonObject:GetCharacter("message").
                 end.
+                
+                if oJsonObject:has("error_text")
+                then return oJsonObject:getCharacter("error_text").
+                
             end.
         end.
-        else return "".
+        return "".
         
         finally:
             if valid-object(oJsonObject) then delete object oJsonObject.
@@ -729,6 +951,24 @@ class wallester.WallesterApiClient implements WallesterApi:
         return string(cHashCode).
     end method.
 
+    method public logical unblockCard( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical unenrolCardFrom3Dsecure( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical update3DsecuritySettings( input pcCardId as character, input pcType as character, input pcMobile as character, input pcLanguageCode as character, input pcPassword as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public logical updateAccountCreditLimit( input pcAccountId as character, input pdNewLimit as decimal, input pdDescription as character, input pcAuditUser as character, output TABLE for ttAccount ):
         
         undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
@@ -742,6 +982,24 @@ class wallester.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical updateAccountName( input pcAccountId as character, input pcNewName as character, input pcAuditUser as character, output TABLE for ttAccount ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical updateCardLimits( input pcCardId as character, input TABLE for ttCardLimits, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical updateCardName( input pcCardId as character, input pcCardName as character, input pcAuditUser as character, output TABLE for ttCard ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical updateCardSecurity( input pcCardId as character, input plContactlessEnabled as logical, input plWithdrawalEnabled as logical, input plInternetPurchaseEnabled as logical, input pcAuditUser as character, output TABLE for ttCard ):
         
         undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
 

@@ -284,7 +284,7 @@ class wallester.WallesterApiClientItTest:
     end method.
 
 
-    @Test.
+ //   @Test.
     method public void getAccounts():
         // given
         create ttAccount. ttAccount.id = "45d21fd7-70b2-4600-ade1-976d5cd1b0a5".
@@ -298,4 +298,40 @@ class wallester.WallesterApiClientItTest:
         temp-table ttAccount:write-json("file", "target/getAccounts.json", true).
         
     end method.    
+    
+ //   @Test.
+    method public void adjustAccountBalance():
+        // given
+        def var dBalBefore as dec no-undo.
+        def var dAmount as dec no-undo.
+        api:getAccountById("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", auditUser, output table ttAccount).
+        temp-table ttAccount:write-json("file", "target/adjustAccountBalance-before.json", true).
+        
+        find ttAccount.
+        dBalBefore = ttAccount.balance.
+        
+        // when
+        dAmount = -150.00.
+        isOk = api:adjustAccountBalance("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", "A-005", dAmount, "test adjust", auditUser, output table ttAccount). 
+        
+        // then
+        temp-table ttAccount:write-json("file", "target/adjustAccountBalance-after.json", true).
+        Assert:IsTrue(isOk).
+        find ttAccount.
+        Assert:equals(dBalBefore + dAmount, ttAccount.balance).
+        
+    end method.
+    
+    @Test.
+    method public void getCardById():
+        // given
+        
+        // when
+        isOk = api:getCardById("c63f515a-b2dd-4327-9e92-696db9cd6f82", auditUser, output table ttCard).
+        
+        // then
+        temp-table ttCard:write-json("file", "target/getCardById.json", true).
+        Assert:isTrue(isOK).
+        
+    end method.
 end class.
