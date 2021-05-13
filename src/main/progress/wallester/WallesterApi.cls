@@ -10,6 +10,8 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.*.
+using wallester.CardBlockType from propath.
+using wallester.CardCloseReason from propath.
 
 interface wallester.WallesterApi:  
     
@@ -18,6 +20,7 @@ interface wallester.WallesterApi:
   {wallester/ttAccountRequest.i}
   {wallester/ttCard.i}
   {wallester/ttCardLimits.i}
+  {wallester/ttCardRequest.i}
   {wallester/ttPerson.i}
   
   method public logical createPerson(input-output table ttPerson, pcAuditUser as char).
@@ -25,8 +28,8 @@ interface wallester.WallesterApi:
   method public logical getPersonByExternalId (pcExternalId as char, pcAuditUser as char, output table ttPerson).
   method public logical updatePerson(input-output table ttPerson, pcAuditUser as char).
   method public logical getPersonAccounts(pcPersonId as char, pcAuditUser as char, output table ttAccount).
-  method public logical activateCard (pcPersonId as char, pcLastFourDigits as char, pcAuditUser as char, output table ttCard).
   method public logical getPersonCards (pcPersonId as char, pcAuditUser as char, output table ttCard).
+
   method public logical createAccount(input table ttAccountRequest, pcAuditUser as char, output table ttAccount).
   method public logical getAccountById(pcAccountId as char, pcAuditUser as char, output table ttAccount).
   method public logical getAccountByExternalId(pcExternalId as char, pcAuditUser as char, output table ttAccount).
@@ -36,6 +39,26 @@ interface wallester.WallesterApi:
   method public logical updateAccountCreditLimit(pcAccountId as char, pdNewLimit as dec, pdDescription as char, pcAuditUser as char, output table ttAccount).
   method public logical updateAccountLimits(pcAccountId as char, input table ttAccountLimits, pcAuditUser as char, output table ttAccount).
   method public logical updateAccountName(pcAccountId as char, pcNewName as char, pcAuditUser as char, output table ttAccount).
+
+  method public logical activateCard (pcPersonId as char, pcLastFourDigits as char, pcAuditUser as char, output table ttCard).
+  method public logical createCard (table ttCardRequest, pcAuditUser as char, output table ttCard).
+  method public logical getCardById (pcCardId as char, pcAuditUser as char, output table ttCard).
+  method public logical getCardByExternalId (pcCardId as char, pcAuditUser as char, output table ttCard).
+  method public logical blockCard (pcCardId as char, peBlockType as CardBlockType, pcAuditUser as char, output table ttCard).
+  method public logical closeCard (pcCardId as char, peCloseReason as CardCloseReason, pcAuditUser as char, output table ttCard).
+  method public logical updateCardLimits (pcCardId as char, input table ttCardLimits, pcAuditUser as char, output table ttCard).
+  method public logical linkCardToAccount (pcCardId as char, pcAccountIs as char, pcAuditUser as char, output table ttCard).
+  method public logical updateCardName (pcCardId as char, pcCardName as char, pcAuditUser as char, output table ttCard).
+  method public logical changePin (pcCardId as char, pcNewEncodedPin as char, pcAuditUser as char, output table ttCard).
+  method public logical unblockCard (pcCardId as char, pcAuditUser as char, output table ttCard).
+  method public logical updateCardSecurity (pcCardId as char, plContactlessEnabled as logical, plWithdrawalEnabled as logical, plInternetPurchaseEnabled as logical, pcAuditUser as char, output table ttCard).
+  method public logical getListOfCards (pcAuditUser as char, output table ttCard).
+  method public logical enrolCardFor3Dsecure (pcCardId as char, pcAuditUser as char, output table ttCard).
+  method public logical update3DsecuritySettings (pcCardId as char, pcType as char, pcMobile as char, pcLanguageCode as char, pcPassword as char, pcAuditUser as char, output table ttCard). 
+  method public logical unenrolCardFrom3Dsecure (pcCardId as char, pcAuditUser as char, output table ttCard).
+  
+  
+  
   method public char    ping(pcMessage as char).
   
 /*  
