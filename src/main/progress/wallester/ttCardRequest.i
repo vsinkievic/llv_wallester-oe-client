@@ -39,9 +39,9 @@ def temp-table tt{&prefix}CardRequest no-undo
     
 //    field is_enrolled_for_3ds as log
 //    field is_3ds_activated as log
-    field sec_3ds_type as char
+    field sec_3ds_type as char init "SMSOTPAndStaticPassword"
     field sec_3ds_mobile as char
-    field sec_3ds_language_code as char
+    field sec_3ds_language_code as char init "ENG"
     field sec_3ds_password as char
 //    field delivery_first_name as char
 //    field delivery_last_name  as char
@@ -51,10 +51,10 @@ def temp-table tt{&prefix}CardRequest no-undo
     field delivery_postal_code as char
     field delivery_city        as char
     field delivery_country_code as char
-    field delivery_dispatch_method as char
-    field delivery_phone as char   
-    field sec_contactless_enabled as log
-    field sec_widhdrawal_enabled as log
-    field sec_internet_purchase_enabled as log
+    field delivery_dispatch_method as char  // "DPDExpress""StandardLatvianPostMail"
+    field delivery_phone as char     //  Phone number is required in case of dispatch_method is "DPDExpress"
+    field sec_contactless_enabled as log init true
+    field sec_widhdrawal_enabled as log init true
+    field sec_internet_purchase_enabled as log init false
     .
     
