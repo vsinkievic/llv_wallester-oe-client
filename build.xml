@@ -48,6 +48,7 @@
 			<propath>
                 <pathelement path="${buildRoot}/bin"/>
                 <pathelement path="${projectRoot}/src/main/progress"/>
+				<pathelement path="lib/progress"/>
 		        <pathelement location="${env.DLC}/tty/netlib/OpenEdge.Net.pl" />
 			</propath>
 			
