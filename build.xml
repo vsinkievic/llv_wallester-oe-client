@@ -27,7 +27,7 @@
 	    </copy>
 
        <copy toDir="target/bin/" flatten="false" includeemptydirs="false">
-            <fileset dir="src/">
+            <fileset dir="src/main/progress">
                 <include name="**/*.i" />
             </fileset>
        </copy>
