@@ -9,7 +9,7 @@
     Notes       : 
   ----------------------------------------------------------------------*/
 
-enum wallester.CardBlockType :  
+enum wallester.api.CardBlockType :  
     define enum
     BlockedByCardholder
     BlockedByCardholderViaPhone

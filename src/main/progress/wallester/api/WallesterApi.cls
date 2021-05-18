@@ -10,18 +10,18 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.*.
-using wallester.CardBlockType from propath.
-using wallester.CardCloseReason from propath.
+using wallester.api.CardBlockType from propath.
+using wallester.api.CardCloseReason from propath.
 
-interface wallester.WallesterApi:  
+interface wallester.api.WallesterApi:  
     
-  {wallester/ttAccount.i}
-  {wallester/ttAccountLimits.i}
-  {wallester/ttAccountRequest.i}
-  {wallester/ttCard.i}
-  {wallester/ttCardLimits.i}
-  {wallester/ttCardRequest.i}
-  {wallester/ttPerson.i}
+  {wallester/api/ttAccount.i}
+  {wallester/api/ttAccountLimits.i}
+  {wallester/api/ttAccountRequest.i}
+  {wallester/api/ttCard.i}
+  {wallester/api/ttCardLimits.i}
+  {wallester/api/ttCardRequest.i}
+  {wallester/api/ttPerson.i}
   
   method public logical createPerson(input-output table ttPerson, pcAuditUser as char).
   method public logical getPersonById (pcPersonID as char, pcAuditUser as char, output table ttPerson).

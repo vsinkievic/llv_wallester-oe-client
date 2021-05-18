@@ -19,21 +19,23 @@ using OpenEdge.Net.HTTP.ClientBuilder from propath.
 using OpenEdge.Net.HTTP.HttpHeader from propath.
 using OpenEdge.Net.HTTP.HttpHeaderBuilder from propath.
 using jwtoe.Jwt from propath.
-using wallester.WallesterApi from propath.
+using wallester.api.WallesterApi from propath.
 using Progress.Json.ObjectModel.JsonArray from propath.
 using common.jwt.JwtTokenConverter from propath.
+using wallester.api.CardBlockType from propath.
+using wallester.api.CardCloseReason from propath.
 
 block-level on error undo, throw.
 
-class wallester.WallesterApiClient implements WallesterApi: 
+class wallester.api.WallesterApiClient implements WallesterApi: 
 
-  {wallester/ttAccount.i}
-  {wallester/ttAccountLimits.i}
-  {wallester/ttAccountRequest.i}
-  {wallester/ttCard.i}
-  {wallester/ttCardLimits.i}
-  {wallester/ttCardRequest.i}
-  {wallester/ttPerson.i}
+  {wallester/api/ttAccount.i}
+  {wallester/api/ttAccountLimits.i}
+  {wallester/api/ttAccountRequest.i}
+  {wallester/api/ttCard.i}
+  {wallester/api/ttCardLimits.i}
+  {wallester/api/ttCardRequest.i}
+  {wallester/api/ttPerson.i}
   
       
     define protected property wallesterUrl as char no-undo init "https://api-sandbox.wallester.eu"
@@ -160,7 +162,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
-    method public logical blockCard( input pcCardId as character, input peBlockType as wallester.CardBlockType, input pcAuditUser as character, output TABLE for ttCard ):
+    method public logical blockCard( input pcCardId as character, input peBlockType as CardBlockType, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -191,6 +193,7 @@ class wallester.WallesterApiClient implements WallesterApi:
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
     end method.
+
 
     method public logical changePin( input pcCardId as character, input pcNewPin as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
@@ -231,7 +234,7 @@ class wallester.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
-    method public logical closeCard( input pcCardId as character, input peCloseReason as wallester.CardCloseReason, input pcAuditUser as character, output TABLE for ttCard ):
+    method public logical closeCard( input pcCardId as character, input peCloseReason as CardCloseReason, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.

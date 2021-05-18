@@ -9,7 +9,7 @@
     Notes       : 
   ----------------------------------------------------------------------*/
 
-enum wallester.CardCloseReason :  
+enum wallester.api.CardCloseReason :  
     
     def enum
     ClosedByClient

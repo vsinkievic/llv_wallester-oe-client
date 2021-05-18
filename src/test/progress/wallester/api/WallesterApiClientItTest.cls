@@ -13,24 +13,21 @@
 block-level on error undo, throw.
 
 using OpenEdge.Core.Assert from propath.
-using wallester.WallesterApi from propath.
-using wallester.WallesterApiClient from propath.
+using wallester.api.WallesterApi from propath.
+using wallester.api.WallesterApiClient from propath.
 using wallester.CardBlockType from propath.
 using wallester.CardCloseReason from propath.
 using common.jwt.JwtTokenConverter from propath.
 
-class wallester.WallesterApiClientItTest:
-//    def var SMART_URL as char no-undo init "http://localhost:8089".
-//    def var SMART_USER as char no-undo init "user".
-//    def var SMART_PASSWD as char no-undo init "user".
+class wallester.api.WallesterApiClientItTest:
 
-  {wallester/ttAccount.i}
-  {wallester/ttAccountLimits.i}
-  {wallester/ttAccountRequest.i}
-  {wallester/ttCard.i}
-  {wallester/ttCardLimits.i}
-  {wallester/ttCardRequest.i}
-  {wallester/ttPerson.i}
+  {wallester/api/ttAccount.i}
+  {wallester/api/ttAccountLimits.i}
+  {wallester/api/ttAccountRequest.i}
+  {wallester/api/ttCard.i}
+  {wallester/api/ttCardLimits.i}
+  {wallester/api/ttCardRequest.i}
+  {wallester/api/ttPerson.i}
       
     def var api as WallesterApi no-undo.
     def var isOK as log no-undo.
