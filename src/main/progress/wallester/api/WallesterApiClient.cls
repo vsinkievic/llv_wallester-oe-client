@@ -284,16 +284,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("credit_limit",                ttAccountRequest.credit_limit).
         oRequestJson:add("used_credit",                 ttAccountRequest.used_credit).
         
-        oLimitsJson = new JsonObject().
-        oLimitsJson:add("daily_purchase",               ttAccountRequest.lim_daily_purchase).
-        oLimitsJson:add("daily_withdrawal",             ttAccountRequest.lim_daily_withdrawal).
-        oLimitsJson:add("daily_internet_purchase",      ttAccountRequest.lim_daily_internet_purchase).
-        oLimitsJson:add("daily_contactless_purchase",   ttAccountRequest.lim_daily_contactless_purchase).
-        oLimitsJson:add("monthly_purchase",             ttAccountRequest.lim_monthly_purchase).
-        oLimitsJson:add("monthly_withdrawal",           ttAccountRequest.lim_monthly_withdrawal).
-        oLimitsJson:add("monthly_internet_purchase",    ttAccountRequest.lim_monthly_internet_purchase).
-        oLimitsJson:add("monthly_contactless_purchase", ttAccountRequest.lim_monthly_contactless_purchase).
-        oRequestJson:add("limits", oLimitsJson).
+        if _anyLimitFieldHasValue()
+        then do:
+            oLimitsJson = new JsonObject().
+            oLimitsJson:add("daily_purchase",               ttAccountRequest.lim_daily_purchase).
+            oLimitsJson:add("daily_withdrawal",             ttAccountRequest.lim_daily_withdrawal).
+            oLimitsJson:add("daily_internet_purchase",      ttAccountRequest.lim_daily_internet_purchase).
+            oLimitsJson:add("daily_contactless_purchase",   ttAccountRequest.lim_daily_contactless_purchase).
+            oLimitsJson:add("monthly_purchase",             ttAccountRequest.lim_monthly_purchase).
+            oLimitsJson:add("monthly_withdrawal",           ttAccountRequest.lim_monthly_withdrawal).
+            oLimitsJson:add("monthly_internet_purchase",    ttAccountRequest.lim_monthly_internet_purchase).
+            oLimitsJson:add("monthly_contactless_purchase", ttAccountRequest.lim_monthly_contactless_purchase).
+            oRequestJson:add("limits", oLimitsJson).
+        end.
         empty temp-table ttAccountRequest.
         empty temp-table ttAccount.        
         
@@ -319,6 +322,40 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oResponseJson)  then delete object oResponseJson.
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
+    end method.
+    
+    method protected logical _anyLimitFieldHasValue():
+        if available ttAccountRequest
+        then do:
+            if      ttAccountRequest.lim_daily_purchase = ?
+                and ttAccountRequest.lim_daily_withdrawal = ?
+                and ttAccountRequest.lim_daily_internet_purchase = ?
+                and ttAccountRequest.lim_daily_contactless_purchase = ?
+                and ttAccountRequest.lim_monthly_purchase = ?
+                and ttAccountRequest.lim_monthly_withdrawal = ?
+                and ttAccountRequest.lim_monthly_internet_purchase = ?
+                and ttAccountRequest.lim_monthly_contactless_purchase = ?
+            then return false.
+            else return true.
+        end.
+        else if available ttCardRequest
+        then do:
+            if  ttCardRequest.lim_daily_purchase = ?
+            and ttCardRequest.lim_daily_withdrawal = ?
+            and ttCardRequest.lim_daily_internet_purchase = ?
+            and ttCardRequest.lim_daily_contactless_purchase = ?
+            and ttCardRequest.lim_monthly_purchase = ?
+            and ttCardRequest.lim_monthly_withdrawal = ?
+            and ttCardRequest.lim_monthly_internet_purchase = ?
+            and ttCardRequest.lim_monthly_contactless_purchase = ?
+            and ttCardRequest.lim_trn_purchase = ?
+            and ttCardRequest.lim_trn_withdrawal = ?
+            and ttCardRequest.lim_trn_internet_purchase = ?
+            and ttCardRequest.lim_trn_contactless_purchase = ?
+            then return false.
+            else return true.
+        end.
+        else return false.    
     end method.
 
     method public logical createCard( input TABLE for ttCardRequest, input pcAuditUser as character, output TABLE for ttCard ):
@@ -374,20 +411,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then oDeliveryJson:add("phone",           ttCardRequest.delivery_phone).
         oRequestJson:add("delivery_address", oDeliveryJson).
         
-        oLimitsJson = new JsonObject().
-        oLimitsJson:add("daily_purchase",               ttCardRequest.lim_daily_purchase).
-        oLimitsJson:add("daily_withdrawal",             ttCardRequest.lim_daily_withdrawal).
-        oLimitsJson:add("daily_internet_purchase",      ttCardRequest.lim_daily_internet_purchase).
-        oLimitsJson:add("daily_contactless_purchase",   ttCardRequest.lim_daily_contactless_purchase).
-        oLimitsJson:add("monthly_purchase",             ttCardRequest.lim_monthly_purchase).
-        oLimitsJson:add("monthly_withdrawal",           ttCardRequest.lim_monthly_withdrawal).
-        oLimitsJson:add("monthly_internet_purchase",    ttCardRequest.lim_monthly_internet_purchase).
-        oLimitsJson:add("monthly_contactless_purchase", ttCardRequest.lim_monthly_contactless_purchase).
-        oLimitsJson:add("transaction_purchase",             ttCardRequest.lim_trn_purchase).
-        oLimitsJson:add("transaction_withdrawal",           ttCardRequest.lim_trn_withdrawal).
-        oLimitsJson:add("transaction_internet_purchase",    ttCardRequest.lim_trn_internet_purchase).
-        oLimitsJson:add("transaction_contactless_purchase", ttCardRequest.lim_trn_contactless_purchase).
-        oRequestJson:add("limits", oLimitsJson).
+        if _anyLimitFieldHasValue()
+        then do:
+            oLimitsJson = new JsonObject().
+            oLimitsJson:add("daily_purchase",               ttCardRequest.lim_daily_purchase).
+            oLimitsJson:add("daily_withdrawal",             ttCardRequest.lim_daily_withdrawal).
+            oLimitsJson:add("daily_internet_purchase",      ttCardRequest.lim_daily_internet_purchase).
+            oLimitsJson:add("daily_contactless_purchase",   ttCardRequest.lim_daily_contactless_purchase).
+            oLimitsJson:add("monthly_purchase",             ttCardRequest.lim_monthly_purchase).
+            oLimitsJson:add("monthly_withdrawal",           ttCardRequest.lim_monthly_withdrawal).
+            oLimitsJson:add("monthly_internet_purchase",    ttCardRequest.lim_monthly_internet_purchase).
+            oLimitsJson:add("monthly_contactless_purchase", ttCardRequest.lim_monthly_contactless_purchase).
+            oLimitsJson:add("transaction_purchase",             ttCardRequest.lim_trn_purchase).
+            oLimitsJson:add("transaction_withdrawal",           ttCardRequest.lim_trn_withdrawal).
+            oLimitsJson:add("transaction_internet_purchase",    ttCardRequest.lim_trn_internet_purchase).
+            oLimitsJson:add("transaction_contactless_purchase", ttCardRequest.lim_trn_contactless_purchase).
+            oRequestJson:add("limits", oLimitsJson).
+        end.
         
         if ttCardRequest.personalization_product_code > ""
         then oRequestJson:add("personalization_product_code", personalization_product_code).

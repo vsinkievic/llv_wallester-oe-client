@@ -15,8 +15,8 @@ block-level on error undo, throw.
 using OpenEdge.Core.Assert from propath.
 using wallester.api.WallesterApi from propath.
 using wallester.api.WallesterApiClient from propath.
-using wallester.CardBlockType from propath.
-using wallester.CardCloseReason from propath.
+using wallester.api.CardBlockType from propath.
+using wallester.api.CardCloseReason from propath.
 using common.jwt.JwtTokenConverter from propath.
 
 class wallester.api.WallesterApiClientItTest:
@@ -58,6 +58,11 @@ class wallester.api.WallesterApiClientItTest:
         
         return.
 
+    end method.
+    
+    @Test.
+    method public void dummyTest():
+        // do nothing
     end method.
     
     /*------------------------------------------------------------------------------
@@ -437,7 +442,7 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
     
- //       @Test.
+        @Test.
     method public void createAnonymousCard():
         // given
         create ttCardRequest.
@@ -445,6 +450,7 @@ class wallester.api.WallesterApiClientItTest:
   //      ttCardRequest.predecessor_card_id = .
   //     ttCardRequest.account_id = "ec74c22f-37e9-4cae-8113-f5766d5ef1e0".
   //      ttCardRequest.person_id = "d4d87e9f-d556-404f-abbd-905f6473b868".
+        ttCardRequest.account_id = ?.
         ttCardRequest.external_id = "".
         ttCardRequest.card_type = "ChipAndPinAnonymous". // ChipAndPin, ChipAndPinAnonymous, Virtual
         ttCardRequest.card_name = "".
@@ -469,11 +475,11 @@ class wallester.api.WallesterApiClientItTest:
 //        ttCardRequest.sec_3ds_language_code = .
         ttCardRequest.sec_3ds_password = "abcd1234".
 //        ttCardRequest.delivery_company_name = .
- //       ttCardRequest.delivery_address1 = "Ąžuolų gatvė 10".
+        ttCardRequest.delivery_address1 = "Ąžuolų gatvė 10".
  //       ttCardRequest.delivery_address2 = "Žiežmarių km.".
- //       ttCardRequest.delivery_postal_code = "01234".
- //       ttCardRequest.delivery_city        = "Žiežmariai".
-//        ttCardRequest.delivery_country_code = "LTU".
+        ttCardRequest.delivery_postal_code = "01234".
+        ttCardRequest.delivery_city        = "Žiežmariai".
+        ttCardRequest.delivery_country_code = "LTU".
  //       ttCardRequest.delivery_dispatch_method = "StandardLatvianPostMail".
   //      ttCardRequest.delivery_phone = .   
         ttCardRequest.sec_contactless_enabled = no.
@@ -681,7 +687,7 @@ class wallester.api.WallesterApiClientItTest:
         temp-table ttCard:write-json ("file", "target/changePinCode.json", true).
     end method.
     
-    @Test.
+  //  @Test.
     method public void linkCard():
         // given
         
