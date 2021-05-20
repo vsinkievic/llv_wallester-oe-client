@@ -14,6 +14,5 @@ enum wallester.api.CardType :
     ChipAndPin 
     ChipAndPinAnonymous
     Virtual.
-    
 
 end enum.
