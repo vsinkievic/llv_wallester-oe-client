@@ -541,6 +541,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     end method.
     
     method protected void _parsePerson (poJson as JsonObject):
+
+        if not valid-object(poJson)
+        then return.
+
         create ttPerson.
         ttPerson.id = poJson:GetCharacter("id").
         ttPerson.personal_number = poJson:GetCharacter("personal_number").
@@ -581,6 +585,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     method protected void _parseAccount (poJson as JsonObject):
         def var oLimitsJson as JsonObject no-undo.
+
+        if not valid-object(poJson)
+        then return.
         
         create ttAccount.
         ttAccount.id                  = poJson:GetCharacter("id").
@@ -629,6 +636,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method protected void _parseAccounts (poJson as JsonArray):
         def var oAccountJson as JsonObject no-undo.
         def var i as int no-undo.
+
+        if not valid-object(poJson)
+        then return.
         
         do i = 1 to poJson:Length:
             oAccountJson = poJson:GetJsonObject(i).
@@ -646,6 +656,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var o3DsecureJson as JsonObject no-undo.
         def var oDeliveryJson as JsonObject no-undo.
         def var oSecurityJson as JsonObject no-undo.
+        
+        if not valid-object(poJson)
+        then return.
         
         create ttCard.
         ttCard.id                  = poJson:GetCharacter("id").
@@ -762,6 +775,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method protected void _parseCards (poJson as JsonArray):
         def var oCardJson as JsonObject no-undo.
         def var i as int no-undo.
+        
+        if not valid-object(poJson)
+        then return.
         
         do i = 1 to poJson:Length:
             oCardJson = poJson:GetJsonObject(i).

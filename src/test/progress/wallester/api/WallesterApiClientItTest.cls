@@ -446,7 +446,7 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
     
-        @Test.
+      //  @Test.
     method public void createAnonymousCard():
         // given
         create ttCardRequest.
