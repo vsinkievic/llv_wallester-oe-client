@@ -42,7 +42,11 @@ class wallester.api.WallesterApiClientItTest:
         super ().
         
         def var oClient as WallesterApiClient no-undo.
-        oClient = new WallesterApiClient().      
+        oClient = new WallesterApiClient("https://api-sandbox.wallester.eu", "x7BeGHe1uFllio$GcqZbSyjN9oWlM4CTD$2s9@yUXNuI0Cbh6Z674tE0vQb1qiIC").   
+        oClient:issuerId = "29a6012b-785e-4579-97a4-38b5ade0064c".
+        oClient:audienceId = "da2b9d46-de76-498e-8746-471e8dd3d120".
+        oClient:productCode = "LATEKOLV".
+        oClient:auditSourceType = "Backend".   
           
         api = oClient.
     end constructor.

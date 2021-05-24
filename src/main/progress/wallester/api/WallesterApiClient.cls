@@ -38,32 +38,47 @@ class wallester.api.WallesterApiClient implements WallesterApi:
   {wallester/api/ttPerson.i}
   
       
-    define protected property wallesterUrl as char no-undo init "https://api-sandbox.wallester.eu"
+    define public property wallesterUrl as char no-undo init "https://api-sandbox.wallester.eu"
+    public get.
+    protected set.
+    
+    define protected property latekoSecret as char no-undo init "xxxx"
     get.
     set.
     
-    define protected property latekoSecret as char no-undo init "x7BeGHe1uFllio$GcqZbSyjN9oWlM4CTD$2s9@yUXNuI0Cbh6Z674tE0vQb1qiIC"
+    define public property issuerId as char no-undo init "iiiii"
     get.
     set.
     
-    define protected property issuerId as char no-undo init "29a6012b-785e-4579-97a4-38b5ade0064c"
+    define public property audienceId as char no-undo init "aaaaaa"
     get.
     set.
     
-    define protected property audienceId as char no-undo init "da2b9d46-de76-498e-8746-471e8dd3d120"
+    define public property productCode as char no-undo init "ppppppp"
     get.
     set.
     
-    define protected property productCode as char no-undo init "LATEKOLV"
-    get.
-    set.
-    
-    define protected property auditSourceType as char no-undo init "Backend" // valid values: Backend or SelfService
+    define public property auditSourceType as char no-undo init "Backend" // valid values: Backend or SelfService
     get.
     set.
     
     def protected var moSourceTypeHeader as HttpHeader no-undo.
     def protected var moProductCodeHeader as HttpHeader no-undo.
+    
+    
+        /*------------------------------------------------------------------------------
+     Purpose:
+     Notes:
+    ------------------------------------------------------------------------------*/
+        
+    constructor public WallesterApiClient ( pcApiUrl as char, pcSecret as char ):
+        super ().
+        
+        this-object:wallesterUrl = pcApiUrl.
+        this-object:latekoSecret = pcSecret.
+        
+    end constructor.
+
     
     method public logical activateCard( input pcPersonId as character, input pcLastFourDigits as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
