@@ -8,7 +8,7 @@ def temp-table tt{&prefix}Card no-undo
     field card_name                        as char
     field masked_card_number               as char
     field reference_number                 as char
-    field expiry_date                      as datetime
+    field expiry_date                      as date
     field block_type                       as char
     field blocked_at                       as datetime
     field card_status                      as char
