@@ -24,6 +24,7 @@ using Progress.Json.ObjectModel.JsonArray from propath.
 using common.jwt.JwtTokenConverter from propath.
 using wallester.api.CardBlockType from propath.
 using wallester.api.CardCloseReason from propath.
+using common.helpers.Files from propath.
 
 block-level on error undo, throw.
 
@@ -36,6 +37,11 @@ class wallester.api.WallesterApiClient implements WallesterApi:
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
   {wallester/api/ttPerson.i}
+  
+    def protected var mcDumpDirectory as char no-undo init "".
+    def protected var moSourceTypeHeader as HttpHeader no-undo.
+    def protected var moProductCodeHeader as HttpHeader no-undo.
+    def protected var mlDumpDirectoryExistsAndIsWritable as logical no-undo init ?.
   
       
     define public property wallesterUrl as char no-undo init "https://api-sandbox.wallester.eu"
@@ -62,11 +68,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     get.
     set.
     
-    def protected var moSourceTypeHeader as HttpHeader no-undo.
-    def protected var moProductCodeHeader as HttpHeader no-undo.
+    define public property dumpDirectory as character no-undo 
+    get():
+        if mcDumpDirectory > "" 
+        then return mcDumpDirectory.
+        else return session:temp-directory.
+    end get.
+    set (pcValue as char):
+       mcDumpDirectory = pcValue.
+    end. 
+
+    define public property dumpEndpoints as char no-undo init ""
+    get.
+    set.
     
     
-        /*------------------------------------------------------------------------------
+    
+    /*------------------------------------------------------------------------------
      Purpose:
      Notes:
     ------------------------------------------------------------------------------*/
@@ -78,29 +96,65 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         this-object:latekoSecret = pcSecret.
         
     end constructor.
-
+    
+    method protected logical _isDumpEnabledFor (pcEndpointName as char):
+        
+        if mlDumpDirectoryExistsAndIsWritable = ?
+        then do:
+            if this-object:dumpDirectory = ? or this-object:dumpDirectory = ""
+            then do:
+                mlDumpDirectoryExistsAndIsWritable = false.
+                return false.
+            end.
+            Files:makeDirectory(this-object:dumpDirectory).
+            
+            mlDumpDirectoryExistsAndIsWritable = Files:directoryExists(this-object:dumpDirectory) and Files:isWritable(this-object:dumpDirectory). 
+        end.
+        
+        if not mlDumpDirectoryExistsAndIsWritable
+        then return false.
+        
+        if pcEndpointName > "" and (this-object:dumpEndpoints = "all" or this-object:dumpEndpoints = "*" or lookup(pcEndpointName, this-object:dumpEndpoints) > 0)
+        then return true.
+        else return false.    
+                
+    end method.
+    
+    method protected void _dump(pcEndpointName as char, pcDumpType as char, poJson as JsonObject):
+        if not valid-object(poJson)
+        then return.
+        
+        poJson:WriteFile(subst("&1/&2_&3_&4.json", dumpDirectory, _getTS(), pcEndpointName, pcDumpType), true).
+    end method.
+    
+    method protected char _getTS():
+        def var tNow as datetime no-undo.
+        tNow = now. 
+        return replace(replace(replace(replace(iso-date(tNow), ".", "_"), "T", "_"), "-", ""), ":", "").
+    end.
     
     method public logical activateCard( input pcPersonId as character, input pcLastFourDigits as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "activateCard".
         
         oRequestJson = new JsonObject().
         oRequestJson:add("last_four_digits",   pcLastFourDigits).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/persons/&1/activate-card", pcPersonId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to activateCard card: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -116,22 +170,22 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "activateCard".
         
         oRequestJson = new JsonObject().
         empty temp-table ttCard.        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
         
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/activate", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createCard-response.json".
-
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+            
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to activateCard card: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -147,6 +201,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "adjustAccountBalance".
         
         oRequestJson = new JsonObject().
         oRequestJson:add("external_id", pcExternalId).
@@ -154,18 +210,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("description", pcDescription).
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/accounts/&1/balance", pcAccountId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createAccount-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to adjustAccountBalance: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -181,23 +235,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "blockCard".
         
         oRequestJson = new JsonObject().
         oRequestJson:add("block_type",   peBlockType:ToString()).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/block", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/blockCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to blockCard: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -215,6 +269,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
         def var cEncodedPin as char no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "changePin".
         
         cEncodedPin = _toBase64(pcNewPin).
         
@@ -222,22 +278,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("encrypted_pin", cEncodedPin).
         empty temp-table ttCard.        
         
-//        def var cJson as char no-undo.
-//        oRequestJson:write(cJson, true).
-//        message cJson skip subst("/v1/cards/&1/pin", pcCardId) view-as alert-box.
-        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/pin", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/changePin-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to changePin: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -253,20 +303,21 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "closeCard".
         
         oRequestJson = new JsonObject().
         oRequestJson:add("close_reason",   peCloseReason:ToString()).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/close", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/closeCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
 
@@ -286,6 +337,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oLimitsJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "createAccount".
         
         find ttAccountRequest no-error.
         if not available ttAccountRequest
@@ -315,18 +368,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         empty temp-table ttAccountRequest.
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("POST", "/v1/accounts", pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createAccount-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to create account: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -381,6 +432,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oLimitsJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "createCard".
         
         find ttCardRequest no-error.
         if not available ttCardRequest
@@ -454,18 +507,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         empty temp-table ttCardRequest.
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("POST", "/v1/cards", pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to create card: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -486,6 +537,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oPersonJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "createPerson".
         
         find ttPerson no-error.
         if not available ttPerson
@@ -516,18 +569,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("person", oPersonJson).
         empty temp-table ttPerson.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("POST", "/v1/persons", pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createPerson-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to create person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -799,18 +850,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getAccountByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAccountByExternalId".
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/accounts-by-external-id/" + pcExternalId, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAccountByExternalId-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
             return true.
@@ -826,18 +878,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getAccountById( input pcAccountId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAccountById".
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/accounts/" + pcAccountId, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAccountById-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
             return true.
@@ -853,18 +906,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getAccountCards( input pcAccountId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAccountById".
         
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", subst("/v1/accounts/&1/cards", pcAccountId), pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAllCards-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCards(oResponseJson:GetJsonArray("cards")).
             return true.
@@ -882,6 +936,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oIdsJson      as JsonArray no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAccounts".
         
         if not can-find(first ttAccount)
         then return true. // there is nothing to do.
@@ -895,15 +951,14 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("POST", "/v1/accounts-by-ids", pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAccounts-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccounts(oResponseJson:GetJsonArray("accounts")).
             return true.
@@ -921,18 +976,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getCardByExternalId( input pcCardExternalId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getCardByExternalId".
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/cards-by-external-id/" + pcCardExternalId, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getCardByExternalId-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
             return true.
@@ -948,18 +1004,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getCardById( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getCardById".
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/cards/" + pcCardId, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getCardById-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
             return true.
@@ -975,18 +1032,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getAllCards(piFromRecord as int64, piCount as int, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAllCards".
         
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", subst("/v1/product-cards?from_record=&1&&records_count=&2", piFromRecord, piCount), pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAllCards-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCards(oResponseJson:GetJsonArray("cards")).
             return true.
@@ -1002,18 +1060,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getPersonAccounts".
         
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", subst("/v1/persons/&1/accounts", pcPersonId), pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getPersonAccounts-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccounts(oResponseJson:GetJsonArray("accounts")).
             return true.
@@ -1029,18 +1088,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getPersonByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttPerson ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getPersonByExternalId".
         
         empty temp-table ttPerson.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/persons-by-external-id/" + pcExternalId, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getPersonByExternalId-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.
@@ -1056,18 +1116,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getPersonById( input pcPersonID as character, input pcAuditUser as character, output TABLE for ttPerson ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getPersonById".
         
         empty temp-table ttPerson.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", "/v1/persons/" + pcPersonID, pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getPersonById-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.
@@ -1083,18 +1144,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     method public logical getPersonCards( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getPersonCards".
         
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("GET", subst("/v1/persons/&1/cards", pcPersonId), pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/getAllCards-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCards(oResponseJson:GetJsonArray("cards")).
             return true.
@@ -1111,19 +1173,20 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "linkCardToAccount".
         
         oRequestJson = new JsonObject().
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/link-to-account/&2", pcCardId, pcAccountId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/linkCardToAccount-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
 
@@ -1414,22 +1477,22 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "unblockCard".
         
         oRequestJson = new JsonObject().
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/unblock", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/unblockCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to unblockCard: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1457,24 +1520,24 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
-        
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateAccountCreditLimit".
+       
         oRequestJson = new JsonObject().
         oRequestJson:Add("credit_limit", pdNewLimit).
         oRequestJson:Add("description",  pdDescription).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/accounts/&1/credit-limit", pcAccountId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/updateCardSecurity-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateAccountCreditLimit: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1491,6 +1554,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oLimitsJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateAccountLimits".
         
         find ttAccountLimits no-error.
         if not available ttAccountLimits
@@ -1510,18 +1575,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         empty temp-table ttAccountRequest.
         empty temp-table ttAccount.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/accounts/&1/limits", pcAccountId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createAccount-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateAccountLimits: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1538,23 +1601,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateAccountName".
         
         oRequestJson = new JsonObject().
         oRequestJson:Add("name",       pcNewName).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/accounts/&1/name", pcAccountId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/updateCardSecurity-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseAccount(oResponseJson:GetJsonObject("account")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateAccountName: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1571,6 +1634,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oLimitsJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateCardLimits".
         
         find ttCardLimits no-error.
         if not available ttCardLimits
@@ -1595,18 +1660,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         empty temp-table ttCardLimits.
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/limits", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/createCard-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateCardLimits: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1623,23 +1686,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateCardName".
         
         oRequestJson = new JsonObject().
         oRequestJson:Add("name",       pcCardName).
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/name", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/updateCardSecurity-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateCardName: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1655,6 +1718,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updateCardSecurity".
         
         oRequestJson = new JsonObject().
         oRequestJson:Add("contactless_enabled",       plContactlessEnabled).
@@ -1663,18 +1728,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         
         empty temp-table ttCard.        
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/security", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/updateCardSecurity-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parseCard(oResponseJson:GetJsonObject("card")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to updateCardSecurity: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
@@ -1691,6 +1754,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oPersonJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "updatePerson".
         
         find ttPerson no-error.
         if not available ttPerson
@@ -1724,19 +1789,17 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson = new JsonObject().
         oRequestJson:add("person", oPersonJson).
         
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
         oResponse = _executeRequest("PUT", "/v1/persons/" + ttPerson.id, pcAuditUser, oRequestJson).
         empty temp-table ttPerson.        
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-// for debug only
-//                def var cResponseString as longchar no-undo.                                    
-//                oResponseJson:Write(cResponseString, true).                                       
-//                copy-lob from cResponseString to file "target/updatePerson-response.json".
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
-
             return true.
         end.
         undo, throw new AppError(subst("Failed to update person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).

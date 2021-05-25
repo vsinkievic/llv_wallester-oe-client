@@ -47,6 +47,8 @@ class wallester.api.WallesterApiClientItTest:
         oClient:audienceId = "da2b9d46-de76-498e-8746-471e8dd3d120".
         oClient:productCode = "LATEKOLV".
         oClient:auditSourceType = "Backend".   
+        oClient:dumpDirectory = "target/dump".
+        oClient:dumpEndpoints = "all".
           
         api = oClient.
     end constructor.
