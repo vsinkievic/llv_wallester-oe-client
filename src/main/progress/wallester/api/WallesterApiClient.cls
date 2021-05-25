@@ -80,7 +80,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     define public property dumpEndpoints as char no-undo init ""
     get.
-    set.
+    set (pcValue as char):
+        dumpEndpoints = trim(pcValue).
+    end.
     
     
     
