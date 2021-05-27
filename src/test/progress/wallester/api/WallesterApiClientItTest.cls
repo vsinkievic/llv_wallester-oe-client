@@ -1,6 +1,6 @@
  
  /*------------------------------------------------------------------------
-    File        : PingPongCallTest
+    File        : WallesterApiClientItTest
     Purpose     : 
     Syntax      : 
     Description : 
