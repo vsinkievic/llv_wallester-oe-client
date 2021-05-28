@@ -224,6 +224,19 @@ class wallester.api.WallesterApiClientItTest:
         temp-table ttPerson:write-json("file", "target/getPersonByExternalId.json", true).
         
     end method.
+
+//    @Test.
+    method public void getPersonsByPersonalNumber():
+        // given
+        
+        // when
+        isOk = api:getPersonsByPersonalNumber("AK123456", auditUser, output table ttPerson).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttPerson:write-json("file", "target/getPersonsByPersonalNumber.json", true).
+        
+    end method.
     
 //    @Test.
     method public void createAccount():

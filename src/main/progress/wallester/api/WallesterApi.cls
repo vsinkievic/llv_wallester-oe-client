@@ -26,6 +26,7 @@ interface wallester.api.WallesterApi:
   method public logical createPerson(input-output table ttPerson, pcAuditUser as char).
   method public logical getPersonById (pcPersonID as char, pcAuditUser as char, output table ttPerson).
   method public logical getPersonByExternalId (pcExternalId as char, pcAuditUser as char, output table ttPerson).
+  method public logical getPersonsByPersonalNumber (pcPersonalNumber as char, pcAuditUser as char, output table ttPerson).
   method public logical updatePerson(input-output table ttPerson, pcAuditUser as char).
   method public logical getPersonAccounts(pcPersonId as char, pcAuditUser as char, output table ttAccount).
   method public logical getPersonCards (pcPersonId as char, pcAuditUser as char, output table ttCard).

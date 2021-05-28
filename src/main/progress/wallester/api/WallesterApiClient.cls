@@ -688,6 +688,24 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method protected void _parsePersons (poJson as JsonArray):
+        def var oPersonJson as JsonObject no-undo.
+        def var i as int no-undo.
+
+        if not valid-object(poJson)
+        then return.
+        
+        do i = 1 to poJson:Length:
+            oPersonJson = poJson:GetJsonObject(i).
+            _parsePerson(oPersonJson).
+        end.
+        
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+            if valid-object(oPersonJson) then delete object oPersonJson.         
+        end finally.
+    end method.
+
 
     method protected void _parseAccounts (poJson as JsonArray):
         def var oAccountJson as JsonObject no-undo.
@@ -1139,6 +1157,34 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             return true.
         end.
         undo, throw new AppError(subst("Failed to get person by ID: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    end method.
+
+    method public logical getPersonsByPersonalNumber( input pcPersonalNumber as character, input pcAuditUser as character, output TABLE for ttPerson ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getPersonByPersonalNumber".
+        
+        empty temp-table ttPerson.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("GET", subst("/v1/persons?personal_number=&1&&from_record=0&&records_count=1000", pcPersonalNumber), pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parsePersons(oResponseJson:GetJsonArray("persons")).
+            return can-find(first ttPerson).
+        end.
+        undo, throw new AppError(subst("Failed to get person by personalNumber: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
 
         finally:
             if valid-object(oResponseJson)  then delete object oResponseJson.
