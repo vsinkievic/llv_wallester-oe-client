@@ -833,7 +833,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then do:
             oSecurityJson = poJson:GetJsonObject("security").
             ttCard.sec_contactless_enabled       = oSecurityJson:getLogical("contactless_enabled").
-            ttCard.sec_widhdrawal_enabled        = oSecurityJson:getLogical("withdrawal_enabled").
+            ttCard.sec_withdrawal_enabled        = oSecurityJson:getLogical("withdrawal_enabled").
             ttCard.sec_internet_purchase_enabled = oSecurityJson:getLogical("internet_purchase_enabled").
         end.
 

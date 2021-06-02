@@ -51,7 +51,7 @@ def temp-table tt{&prefix}Card no-undo
     field delivery_dispatch_method         as char     init ?
     field delivery_phone                   as char     init ?
     field sec_contactless_enabled          as log      init ?
-    field sec_widhdrawal_enabled           as log      init ?
+    field sec_withdrawal_enabled           as log      init ?
     field sec_internet_purchase_enabled    as log      init ?
     .
     
