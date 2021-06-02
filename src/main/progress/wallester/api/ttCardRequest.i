@@ -54,7 +54,7 @@ def temp-table tt{&prefix}CardRequest no-undo
     field delivery_dispatch_method         as char    init ?     // "DPDExpress""StandardLatvianPostMail"
     field delivery_phone                   as char    init ?     //  Phone number is required in case of dispatch_method is "DPDExpress"
     field sec_contactless_enabled          as log     init ?
-    field sec_widhdrawal_enabled           as log     init ?
+    field sec_withdrawal_enabled           as log     init ?
     field sec_internet_purchase_enabled    as log     init ?
     .
     

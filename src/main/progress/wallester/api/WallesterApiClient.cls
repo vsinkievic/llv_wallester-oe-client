@@ -455,7 +455,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
         oSecurityJson = new JsonObject().
         oSecurityJson:Add("contactless_enabled", ttCardRequest.sec_contactless_enabled).
-        oSecurityJson:Add("withdrawal_enabled", ttCardRequest.sec_widhdrawal_enabled).
+        oSecurityJson:Add("withdrawal_enabled", ttCardRequest.sec_withdrawal_enabled).
         oSecurityJson:Add("internet_purchase_enabled", ttCardRequest.sec_internet_purchase_enabled).
         oRequestJson:add("security", oSecurityJson).
         
