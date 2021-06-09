@@ -448,7 +448,7 @@ class wallester.api.WallesterApiClientItTest:
         ttCardRequest.delivery_dispatch_method = "StandardLatvianPostMail".
   //      ttCardRequest.delivery_phone = .   
         ttCardRequest.sec_contactless_enabled = yes.
-        ttCardRequest.sec_widhdrawal_enabled = yes.
+        ttCardRequest.sec_withdrawal_enabled = yes.
         ttCardRequest.sec_internet_purchase_enabled = yes.
 
                 
@@ -502,7 +502,7 @@ class wallester.api.WallesterApiClientItTest:
  //       ttCardRequest.delivery_dispatch_method = "StandardLatvianPostMail".
   //      ttCardRequest.delivery_phone = .   
         ttCardRequest.sec_contactless_enabled = no.
-        ttCardRequest.sec_widhdrawal_enabled = no.
+        ttCardRequest.sec_withdrawal_enabled = no.
         ttCardRequest.sec_internet_purchase_enabled = no.
 
                 

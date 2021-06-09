@@ -441,6 +441,13 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if not available ttCardRequest
         then undo, throw new AppError("Provide ttCardRequest record!", 0).
         
+        if not ttCardRequest.card_type > ""
+        then undo, throw new AppError("Provide card_type!", 0).
+        if not ttCardRequest.sec_3ds_mobile > ""
+        then undo, throw new AppError("Provide sec_3ds_mobile!", 0).
+        if not ttCardRequest.sec_3ds_password > ""
+        then undo, throw new AppError("Provide sec_3ds_password!", 0).
+        
         oRequestJson = new JsonObject().
         if (ttCardRequest.predecessor_card_id > "predecessor_card_id")
         then oRequestJson:add("predecessor_card_id",    ttCardRequest.predecessor_card_id).
@@ -610,11 +617,15 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttPerson.middle_name            = poJson:getCharacter("middle_name").
         ttPerson.last_name              = poJson:getCharacter("last_name").
         ttPerson.birth_date             = poJson:GetDate("birth_date").
-        ttPerson.birth_country_code     = poJson:GetCharacter("birth_country_code").
-        ttPerson.gender                 = poJson:getCharacter("gender").
+        if poJson:has("birth_country_code")
+        then ttPerson.birth_country_code     = poJson:GetCharacter("birth_country_code").
+        if poJson:has("gender")
+        then ttPerson.gender                 = poJson:getCharacter("gender").
         ttPerson.mobile                 = poJson:getCharacter("mobile").
-        ttPerson.email                  = poJson:getCharacter("email").
-        ttPerson.external_id            = poJson:getCharacter("external_id").
+        if poJson:has("email")
+        then ttPerson.email                  = poJson:getCharacter("email").
+        if poJson:has("external_id")
+        then ttPerson.external_id            = poJson:getCharacter("external_id").
         ttPerson.residence_country_code = poJson:getCharacter("residence_country_code").
         ttPerson.is_represented_by_someone_else = poJson:GetLogical("is_represented_by_someone_else").
         ttPerson.is_beneficial_owner    = poJson:GetLogical("is_beneficial_owner").
