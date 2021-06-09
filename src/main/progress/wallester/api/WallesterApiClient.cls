@@ -749,8 +749,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         ttCard.id                  = poJson:GetCharacter("id").
         if poJson:has("predecessor_card_id")
         then ttCard.predecessor_card_id = poJson:GetCharacter("predecessor_card_id").
-        ttCard.account_id          = poJson:getCharacter("account_id").
-        ttCard.person_id           = poJson:GetCharacter("person_id").
+        if poJson:has("account_id")
+        then ttCard.account_id     = poJson:getCharacter("account_id").
+        if poJson:has("person_id")
+        then ttCard.person_id           = poJson:GetCharacter("person_id").
         if poJson:has("external_id")
         then ttCard.external_id    = poJson:getCharacter("external_id").
         ttCard.card_type           = poJson:getCharacter("type").
