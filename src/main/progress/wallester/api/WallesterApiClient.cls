@@ -1575,9 +1575,51 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     end method.
 
     method public logical update3DsecuritySettings( input pcCardId as character, input pcType as character, input pcMobile as character, input pcLanguageCode as character, input pcPassword as character, input pcAuditUser as character, output TABLE for ttCard ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "update3DsecuritySettings".
         
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+        if not pcCardId > ""
+        then undo, throw new AppError("Provide card_id!", 0).
+        if not pcType > ""
+        then undo, throw new AppError("Provide sec_3ds_type!", 0).
+        if not pcMobile > ""
+        then undo, throw new AppError("Provide sec_3ds_mobile!", 0).
+        if not pcPassword > ""
+        then undo, throw new AppError("Provide sec_3ds_password!", 0).
+        if not pcLanguageCode > ""
+        then undo, throw new AppError("Provide sec_3ds_language_code!", 0).
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("type", pcType).
+        oRequestJson:add("mobile", pcMobile).
+        oRequestJson:add("language_code", pcLanguageCode).
+        oRequestJson:add("password", pcPassword).
+        
+        empty temp-table ttCardRequest.
+        empty temp-table ttCard.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", subst("/v1/cards/&1/3d-secure", pcCardId), pcAuditUser, oRequestJson).
 
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseCard(oResponseJson:GetJsonObject("card")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to update3DsecuritySettings: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
     end method.
 
     method public logical updateAccountCreditLimit( input pcAccountId as character, input pdNewLimit as decimal, input pdDescription as character, input pcAuditUser as character, output TABLE for ttAccount ):

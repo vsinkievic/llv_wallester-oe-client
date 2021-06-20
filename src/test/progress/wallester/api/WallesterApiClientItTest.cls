@@ -353,7 +353,7 @@ class wallester.api.WallesterApiClientItTest:
         message session:cpInternal skip session:cpstream skip. 
         //view-as alert-box.
         // when
-        isOk = api:getCardById("d598ef4f-9dd9-4dbf-b4f9-15d0ef57949d", auditUser, output table ttCard).
+        isOk = api:getCardById("cc7fb8ad-3230-4fb6-9089-1d304fa3ec22", auditUser, output table ttCard).
         
         // then
         temp-table ttCard:write-json("file", "target/getCardById.json", true).
