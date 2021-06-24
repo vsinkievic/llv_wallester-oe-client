@@ -477,18 +477,18 @@ class wallester.api.WallesterApiClientItTest:
         ttCardRequest.expiry_days = 90. // 1....1825 - up to 5 years
         ttCardRequest.expiry_days_round = true.
         ttCardRequest.encrypted_pin = "".
-        ttCardRequest.lim_daily_purchase = 99.99.
-        ttCardRequest.lim_daily_withdrawal = 199.99.
-        ttCardRequest.lim_daily_internet_purchase = 19.99.
-        ttCardRequest.lim_daily_contactless_purchase = 9.99.
-        ttCardRequest.lim_monthly_purchase = 999.99.
-        ttCardRequest.lim_monthly_withdrawal = 899.99.
-        ttCardRequest.lim_monthly_internet_purchase = 799.99.
-        ttCardRequest.lim_monthly_contactless_purchase = 399.99.
-        ttCardRequest.lim_trn_purchase = 88.88.
-        ttCardRequest.lim_trn_withdrawal = 77.77.
-        ttCardRequest.lim_trn_internet_purchase = 66.66.
-        ttCardRequest.lim_trn_contactless_purchase = 55.55.
+        ttCardRequest.lim_daily_purchase             = 2999.99.
+        ttCardRequest.lim_daily_withdrawal           =  199.99.
+        ttCardRequest.lim_daily_internet_purchase    = 2999.99.
+        ttCardRequest.lim_daily_contactless_purchase =  149.99.
+        ttCardRequest.lim_monthly_purchase             = 14999.99.
+        ttCardRequest.lim_monthly_withdrawal           =   199.99.
+        ttCardRequest.lim_monthly_internet_purchase    = 14999.99.
+        ttCardRequest.lim_monthly_contactless_purchase =  4499.99.
+        ttCardRequest.lim_trn_purchase             = 999.99.
+        ttCardRequest.lim_trn_withdrawal           = 499.99.
+        ttCardRequest.lim_trn_internet_purchase    = 699.99.
+        ttCardRequest.lim_trn_contactless_purchase = 399.99.
      //   ttCardRequest.sec_3ds_type = .
         ttCardRequest.sec_3ds_mobile = "+37061495615".
 //        ttCardRequest.sec_3ds_language_code = .
@@ -513,6 +513,63 @@ class wallester.api.WallesterApiClientItTest:
         Assert:isTrue(isOK).
         temp-table ttCard:write-json("file", "target/createAnonymousCard.json", true).
         
+    end method.
+    
+   // @Test.
+    method public void createMultipleAnonymouseCards ():
+        def var i as int no-undo.
+        
+        do i = 1 to 200:
+            createAnonymous(string(i, "999")).
+        end.
+    end method.
+    
+    method private void createAnonymous(pcExternalId as char):
+        empty temp-table ttCardRequest.
+        
+        create ttCardRequest.
+
+  //      ttCardRequest.predecessor_card_id = .
+  //     ttCardRequest.account_id = "ec74c22f-37e9-4cae-8113-f5766d5ef1e0".
+  //      ttCardRequest.person_id = "d4d87e9f-d556-404f-abbd-905f6473b868".
+        ttCardRequest.account_id = ?.
+        ttCardRequest.external_id = pcExternalId.
+        ttCardRequest.card_type = "ChipAndPinAnonymous". // ChipAndPin, ChipAndPinAnonymous, Virtual
+        ttCardRequest.card_name = "".
+        ttCardRequest.personalization_product_code = "".
+        ttCardRequest.expiry_days = 90. // 1....1825 - up to 5 years
+        ttCardRequest.expiry_days_round = true.
+        ttCardRequest.encrypted_pin = "".
+        ttCardRequest.lim_daily_purchase             = 2999.99.
+        ttCardRequest.lim_daily_withdrawal           =  199.99.
+        ttCardRequest.lim_daily_internet_purchase    = 2999.99.
+        ttCardRequest.lim_daily_contactless_purchase =  149.99.
+        ttCardRequest.lim_monthly_purchase             = 14999.99.
+        ttCardRequest.lim_monthly_withdrawal           =   199.99.
+        ttCardRequest.lim_monthly_internet_purchase    = 14999.99.
+        ttCardRequest.lim_monthly_contactless_purchase =  4499.99.
+        ttCardRequest.lim_trn_purchase             = 999.99.
+        ttCardRequest.lim_trn_withdrawal           = 499.99.
+        ttCardRequest.lim_trn_internet_purchase    = 699.99.
+        ttCardRequest.lim_trn_contactless_purchase = 399.99.
+     //   ttCardRequest.sec_3ds_type = .
+        ttCardRequest.sec_3ds_mobile = "+37061495615".
+//        ttCardRequest.sec_3ds_language_code = .
+        ttCardRequest.sec_3ds_password = "abcd1234".
+//        ttCardRequest.delivery_company_name = .
+        ttCardRequest.delivery_address1 = "Ąžuolų gatvė 10".
+ //       ttCardRequest.delivery_address2 = "Žiežmarių km.".
+        ttCardRequest.delivery_postal_code = "01234".
+        ttCardRequest.delivery_city        = "Žiežmariai".
+        ttCardRequest.delivery_country_code = "LTU".
+ //       ttCardRequest.delivery_dispatch_method = "StandardLatvianPostMail".
+  //      ttCardRequest.delivery_phone = .   
+        ttCardRequest.sec_contactless_enabled = no.
+        ttCardRequest.sec_withdrawal_enabled = no.
+        ttCardRequest.sec_internet_purchase_enabled = no.
+
+                
+        api:createCard(table ttCardRequest, auditUser, output table ttCard).
     end method.
     
   //  @Test.
