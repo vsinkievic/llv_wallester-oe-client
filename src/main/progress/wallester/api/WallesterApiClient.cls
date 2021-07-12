@@ -1603,7 +1603,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         
         lDumpEnabled = _isDumpEnabledFor(cEndpointName).
         if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
-        oResponse = _executeRequest("POST", subst("/v1/cards/&1/3d-secure", pcCardId), pcAuditUser, oRequestJson).
+        oResponse = _executeRequest("PATCH", subst("/v1/cards/&1/3d-secure", pcCardId), pcAuditUser, oRequestJson).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
