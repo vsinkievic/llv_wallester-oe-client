@@ -62,6 +62,7 @@ interface wallester.api.WallesterApi:
   method public logical update3DsecuritySettings (pcCardId as char, pcType as char, pcMobile as char, pcLanguageCode as char, pcPassword as char, pcAuditUser as char, output table ttCard). 
   method public logical unenrolCardFrom3Dsecure (pcCardId as char, pcAuditUser as char, output table ttCard).
   
+  method public logical createAccountAdjustment (pcAccountId as char, pcExternalId as char, pdAmount as dec, pcDescription as char, pcAuditUser as char, output table ttAdj).
   method public logical getAllAuthorizations (piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   method public logical getAccountAuthorizations (pcAccountId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   method public logical getCardAuthorizations (pcCardId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).

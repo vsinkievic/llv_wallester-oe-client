@@ -430,6 +430,41 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         else return false.    
     end method.
 
+    method public logical createAccountAdjustment( input pcAccountId as character, input pcExternalId as character, input pdAmount as decimal, input pcDescription as character, input pcAuditUser as character, output TABLE for ttAdj ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "createAccountAdjustment".
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("account_id",  pcAccountId).
+        oRequestJson:add("external_id", pcExternalId).
+        oRequestJson:add("amount",      pdAmount).
+        oRequestJson:add("description", pcDescription).
+        empty temp-table ttAdj.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", "/v1/account-adjustments", pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseAccountAdjustment(oResponseJson:GetJsonObject("account_adjustment")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to createAccountAdjustment: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    end method.
+
     method public logical createCard( input TABLE for ttCardRequest, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
         def var oSecurityJson as JsonObject no-undo.
@@ -815,6 +850,28 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttStmt.rec_status      = poJson:getCharacter("status").
         if poJson:has("response")
         then ttStmt.response      = poJson:getCharacter("response").
+
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+        end finally.
+    end method.
+
+    method protected void _parseAccountAdjustment (poJson as JsonObject):
+        if not valid-object(poJson)
+        then return.
+        
+        create ttAdj.
+        ttAdj.id                     = poJson:GetCharacter("id").
+        if poJson:has("account_id")
+        then ttAdj.account_id        = poJson:getCharacter("account_id").
+        if poJson:has("external_id")
+        then ttAdj.external_id       = poJson:getCharacter("external_id").
+        if poJson:has("created_at")                 
+        then ttAdj.created_at        = poJson:GetDatetime("created_at").
+        if poJson:has("amount")
+        then ttAdj.amount            = poJson:getDecimal("amount").
+        if poJson:has("description")
+        then ttAdj.description       = poJson:getCharacter("description").
 
         finally:
             if valid-object(poJson)      then delete object poJson.   

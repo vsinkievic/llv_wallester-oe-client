@@ -21,6 +21,7 @@ using common.jwt.JwtTokenConverter from propath.
 
 class wallester.api.WallesterApiClientItTest:
 
+  {wallester/api/dsStatement.i}
   {wallester/api/ttAccount.i}
   {wallester/api/ttAccountLimits.i}
   {wallester/api/ttAccountRequest.i}
@@ -90,7 +91,7 @@ class wallester.api.WallesterApiClientItTest:
         empty temp-table ttAccountLimits.
         empty temp-table ttStatementRequestParams.
         empty temp-table ttStmt.
-        return.
+        dataset dsStatement:empty-dataset ().
 
     end method.
       
@@ -348,6 +349,30 @@ class wallester.api.WallesterApiClientItTest:
         Assert:IsTrue(isOk).
         find ttAccount.
         Assert:equals(dBalBefore + dAmount, ttAccount.balance).
+        
+    end method.
+
+//   @Test.
+    method public void createAccountAdjustment():
+        // given
+        def var dBalBefore as dec no-undo.
+        def var dAmount as dec no-undo.
+        api:getAccountById("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", auditUser, output table ttAccount).
+        temp-table ttAccount:write-json("file", "target/createAccountAdjustment-before.json", true).
+        
+        find ttAccount.
+        dBalBefore = ttAccount.balance.
+        
+        // when
+        dAmount = 15.00.
+        isOk = api:createAccountAdjustment("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", "A-006", dAmount, "test adjust", auditUser, output table ttAdj). 
+        
+        // then
+        temp-table ttAdj:write-json("file", "target/createAccountAdjustment.json", true).
+        Assert:IsTrue(isOk).
+
+        api:getAccountById("ec74c22f-37e9-4cae-8113-f5766d5ef1e0", auditUser, output table ttAccount).
+        temp-table ttAccount:write-json("file", "target/createAccountAdjustment-after.json", true).
         
     end method.
     
