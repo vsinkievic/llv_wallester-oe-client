@@ -28,6 +28,8 @@ class wallester.api.WallesterApiClientItTest:
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
   {wallester/api/ttPerson.i}
+  {wallester/api/ttStatementRequestParams.i}
+  {wallester/api/ttStmt.i}
       
     def var api as WallesterApi no-undo.
     def var isOK as log no-undo.
@@ -86,6 +88,8 @@ class wallester.api.WallesterApiClientItTest:
         empty temp-table ttCard.
         empty temp-table ttCardLimits.
         empty temp-table ttAccountLimits.
+        empty temp-table ttStatementRequestParams.
+        empty temp-table ttStmt.
         return.
 
     end method.
@@ -773,6 +777,31 @@ class wallester.api.WallesterApiClientItTest:
         // then
         Assert:IsTrue(isOK).
         temp-table ttCard:write-json ("file", "target/linkCard.json", true).
+        
+    end method.
+    
+ //   @Test.
+    method public void getAccountStatement():
+        // given
+        create ttStatementRequestParams.
+        ttStatementRequestParams.include_account_adjustments = true.
+        ttStatementRequestParams.include_authorizations      = true.
+        ttStatementRequestParams.include_fees                = true.
+        ttStatementRequestParams.include_transactions        = true.
+        
+//        ttStatementRequestParams.from_date = add-interval(now, -2, "hour").
+//        ttStatementRequestParams.to_date   = now.
+        
+        // when
+        isOk = api:getAccountStatement("e7e91696-500d-4cb5-a353-582f45ef01bf", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttStmt:write-json("file", "target/getAccountStatement.json", true).
+        
+        for each ttStmt: 
+            
+        end.
         
     end method.
     

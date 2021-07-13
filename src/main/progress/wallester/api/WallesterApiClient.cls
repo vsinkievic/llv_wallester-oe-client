@@ -25,11 +25,13 @@ using common.jwt.JwtTokenConverter from propath.
 using wallester.api.CardBlockType from propath.
 using wallester.api.CardCloseReason from propath.
 using common.helpers.Files from propath.
+using common.helpers.Converter from propath.
 
 block-level on error undo, throw.
 
 class wallester.api.WallesterApiClient implements WallesterApi: 
 
+  {wallester/api/dsStatement.i}  
   {wallester/api/ttAccount.i}
   {wallester/api/ttAccountLimits.i}
   {wallester/api/ttAccountRequest.i}
@@ -37,7 +39,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
   {wallester/api/ttPerson.i}
-  
+  {wallester/api/ttStatementRequestParams.i}
+  {wallester/api/ttStmt.i}
+    
     def protected var mcDumpDirectory as char no-undo init "".
     def protected var moSourceTypeHeader as HttpHeader no-undo.
     def protected var moProductCodeHeader as HttpHeader no-undo.
@@ -736,6 +740,87 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method protected void _parseAccountStatement (pcAccountId as char, poJson as JsonArray):
+        def var oStatementJson as JsonObject no-undo.
+        def var i as int no-undo.
+
+        if not valid-object(poJson)
+        then return.
+        
+        do i = 1 to poJson:Length:
+            oStatementJson = poJson:GetJsonObject(i).
+            _parseStatementRecord(pcAccountId, oStatementJson).
+        end.
+        
+        finally:
+            if valid-object(poJson)         then delete object poJson.   
+            if valid-object(oStatementJson) then delete object oStatementJson.         
+        end finally.
+    end method.
+
+    method protected void _parseStatementRecord (pcAccountId as char, poJson as JsonObject):
+        if not valid-object(poJson)
+        then return.
+        
+        create ttStmt.
+        ttStmt.id                              = poJson:GetCharacter("id").
+        ttStmt.account_id                      = pcAccountId.
+        if poJson:has("card_id")              
+        then ttStmt.card_id                    = poJson:getCharacter("card_id").
+        if poJson:has("type")                 
+        then ttStmt.type                       = poJson:getCharacter("type").
+        if poJson:has("group")                
+        then ttStmt.tx_group                   = poJson:getCharacter("group").
+        if poJson:has("date")                 
+        then ttStmt.date                       = poJson:GetDatetime("date").
+        if poJson:has("transaction_amount")
+        then ttStmt.transaction_amount         = poJson:getDecimal("transaction_amount").
+        if poJson:has("transaction_currency_code")
+        then ttStmt.transaction_currency_code  = poJson:getCharacter("transaction_currency_code").
+        if poJson:has("account_amount")
+        then ttStmt.account_amount             = poJson:getDecimal("account_amount").
+        if poJson:has("account_currency_code")
+        then ttStmt.account_currency_code      = poJson:getCharacter("account_currency_code").
+
+        if poJson:has("merchant_category_code")
+        then ttStmt.merchant_category_code     = poJson:getCharacter("merchant_category_code").
+        if poJson:has("merchant_id")
+        then ttStmt.merchant_id                = poJson:getCharacter("merchant_id").
+        if poJson:has("terminal_id")           
+        then ttStmt.terminal_id                = poJson:getCharacter("terminal_id").
+        if poJson:has("merchant_name")         
+        then ttStmt.merchant_name              = poJson:getCharacter("merchant_name").
+        if poJson:has("merchant_city")         
+        then ttStmt.merchant_city              = poJson:getCharacter("merchant_city").
+        if poJson:has("merchant_country_code")
+        then ttStmt.merchant_country_code      = poJson:getCharacter("merchant_country_code").
+        if poJson:has("description")
+        then ttStmt.description                = poJson:getCharacter("description").
+        if poJson:has("original_authorization_id")
+        then ttStmt.original_authorization_id  = poJson:getCharacter("original_authorization_id").
+
+        if poJson:has("is_reversal")
+        then ttStmt.is_reversal                = poJson:GetLogical("is_reversal").
+        if poJson:has("is_declined")          
+        then ttStmt.is_declined                = poJson:GetLogical("is_declined").
+        if poJson:has("is_cleared")           
+        then ttStmt.is_cleared                 = poJson:GetLogical("is_cleared").
+
+        if poJson:has("marked_for_dispute_at")
+        then ttStmt.marked_for_dispute_at      = poJson:GetDatetime("marked_for_dispute_at").
+        if poJson:has("marked_for_dispute_by")
+        then ttStmt.marked_for_dispute_by      = poJson:getCharacter("marked_for_dispute_by").
+        
+        if poJson:has("status")
+        then ttStmt.rec_status      = poJson:getCharacter("status").
+        if poJson:has("response")
+        then ttStmt.response      = poJson:getCharacter("response").
+
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+        end finally.
+    end method.
+
     method protected void _parseCard (poJson as JsonObject):
         def var oLimitsJson as JsonObject no-undo.
         def var o3DsecureJson as JsonObject no-undo.
@@ -883,6 +968,12 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     end method.
 
+    method public logical getAccountAuthorizations( input pcAccountId as character, input ptFromDate as datetime, input ptTillDate as datetime, input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public logical getAccountByExternalId( input pcExternalId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -1009,6 +1100,99 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method public logical getAccountStatement( input pcAccountId as character, input piFromRecord as int64, input piCount as integer, input TABLE for ttStatementRequestParams, input pcAuditUser as character, output TABLE for ttStmt ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getAccountStatement".
+        
+        empty temp-table ttStmt.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        oResponse = _executeRequest("GET", subst("/v1/accounts/&1/statement?from_record=&2&&records_count=&3&4", pcAccountId, piFromRecord, piCount, _getRequestParams()), pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseAccountStatement(pcAccountId, oResponseJson:GetJsonArray("records")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get accounts: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+
+    end method.
+    
+    method protected character _getRequestParams(): 
+        def var i as int no-undo.
+        def var cFieldName as char no-undo.
+        def var cFieldType as char no-undo.
+        def var hField     as handle no-undo.
+        def var cParams    as char no-undo.
+        
+        find ttStatementRequestParams no-error.
+        if not available ttStatementRequestParams
+        then create ttStatementRequestParams.
+        
+        do i=1 to buffer ttStatementRequestParams:num-fields: 
+            hField     = buffer ttStatementRequestParams:buffer-field (i).
+            if hField:buffer-value = ?
+            then next.
+            
+            cFieldName = hField:name.            
+            cFieldType = hField:data-type.
+            
+            case cFieldType:
+                when "DATETIME"
+                then do:
+                    cParams = subst("&1&&&2=&3", cParams, cFieldName, Converter:formatDatetime(add-interval(hField:buffer-value, - timezone, "minutes"), "YYYY-MM-DDTHH:mm:ssZ")).
+                end.
+                 
+                when "LOGICAL"
+                then do: 
+                    cParams = subst("&1&&&2=&3", cParams, cFieldName, if hField:buffer-value then "true" else "false").        
+                end.
+                
+                otherwise do: 
+                    undo, throw new AppError(subst("Datatype &1 is not supported in _getRequestParams yet!", cFieldType), 0).
+                end.
+            end.
+        end.
+        
+//        message cParams view-as alert-box.
+        return cParams.
+        
+    end method.
+
+    method public logical getAccountTransactions( input pcAccountId as character, input ptFromDate as datetime, input ptTillDate as datetime, input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical getAllAuthorizations( input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical getAllTransactions( input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
+    method public logical getCardAuthorizations( input pcCardId as character, input ptFromDate as datetime, input ptTillDate as datetime, input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
+    end method.
+
     method public logical getCardByExternalId( input pcCardExternalId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -1091,6 +1275,12 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oResponseJson)  then delete object oResponseJson.
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
+    end method.
+
+    method public logical getCardTransactions( input pcCardId as character, input ptFromDate as datetime, input ptTillDate as datetime, input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
+        
+        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
+
     end method.
 
     method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
