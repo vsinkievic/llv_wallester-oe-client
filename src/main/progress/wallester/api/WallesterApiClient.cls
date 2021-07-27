@@ -936,60 +936,72 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if poJson:has("limits")
         then do:
             oLimitsJson = poJson:GetJsonObject("limits").
-            ttCard.lim_daily_purchase               = oLimitsJson:getDecimal("daily_purchase").
-            ttCard.lim_daily_withdrawal             = oLimitsJson:getDecimal("daily_withdrawal").
-            ttCard.lim_daily_internet_purchase      = oLimitsJson:getDecimal("daily_internet_purchase").
-            ttCard.lim_daily_contactless_purchase   = oLimitsJson:getDecimal("daily_contactless_purchase").
-            ttCard.lim_monthly_purchase             = oLimitsJson:getDecimal("monthly_purchase").
-            ttCard.lim_monthly_withdrawal           = oLimitsJson:getDecimal("monthly_withdrawal").
-            ttCard.lim_monthly_internet_purchase    = oLimitsJson:getDecimal("monthly_internet_purchase").
-            ttCard.lim_monthly_contactless_purchase = oLimitsJson:getDecimal("monthly_contactless_purchase").
-            ttCard.lim_trn_purchase                 = oLimitsJson:getDecimal("transaction_purchase").
-            ttCard.lim_trn_withdrawal               = oLimitsJson:getDecimal("transaction_withdrawal").
-            ttCard.lim_trn_internet_purchase        = oLimitsJson:getDecimal("transaction_internet_purchase").
-            ttCard.lim_trn_contactless_purchase     = oLimitsJson:getDecimal("transaction_contactless_purchase").
+            if valid-object(oLimitsJson)
+            then do:
+                ttCard.lim_daily_purchase               = oLimitsJson:getDecimal("daily_purchase").
+                ttCard.lim_daily_withdrawal             = oLimitsJson:getDecimal("daily_withdrawal").
+                ttCard.lim_daily_internet_purchase      = oLimitsJson:getDecimal("daily_internet_purchase").
+                ttCard.lim_daily_contactless_purchase   = oLimitsJson:getDecimal("daily_contactless_purchase").
+                ttCard.lim_monthly_purchase             = oLimitsJson:getDecimal("monthly_purchase").
+                ttCard.lim_monthly_withdrawal           = oLimitsJson:getDecimal("monthly_withdrawal").
+                ttCard.lim_monthly_internet_purchase    = oLimitsJson:getDecimal("monthly_internet_purchase").
+                ttCard.lim_monthly_contactless_purchase = oLimitsJson:getDecimal("monthly_contactless_purchase").
+                ttCard.lim_trn_purchase                 = oLimitsJson:getDecimal("transaction_purchase").
+                ttCard.lim_trn_withdrawal               = oLimitsJson:getDecimal("transaction_withdrawal").
+                ttCard.lim_trn_internet_purchase        = oLimitsJson:getDecimal("transaction_internet_purchase").
+                ttCard.lim_trn_contactless_purchase     = oLimitsJson:getDecimal("transaction_contactless_purchase").
+            end.
         end.
 
         if poJson:has("3d_secure_settings")
         then do:
             o3DsecureJson = poJson:GetJsonObject("3d_secure_settings").
-            ttCard.sec_3ds_type          = o3DsecureJson:GetCharacter("type").
-            ttCard.sec_3ds_mobile        = o3DsecureJson:GetCharacter("mobile").
-            ttCard.sec_3ds_language_code = o3DsecureJson:GetCharacter("language_code").
-            ttCard.sec_3ds_password      = o3DsecureJson:GetCharacter("password").
+            if valid-object(o3DsecureJson)
+            then do:
+                ttCard.sec_3ds_type          = o3DsecureJson:GetCharacter("type").
+                ttCard.sec_3ds_mobile        = o3DsecureJson:GetCharacter("mobile").
+                ttCard.sec_3ds_language_code = o3DsecureJson:GetCharacter("language_code").
+                ttCard.sec_3ds_password      = o3DsecureJson:GetCharacter("password").
+            end.
         end.
 
         if poJson:has("delivery_address")
         then do:
             oDeliveryJson = poJson:GetJsonObject("delivery_address").
-            if oDeliveryJson:has("first_name")
-            then ttCard.delivery_first_name      = oDeliveryJson:GetCharacter("first_name").
-            if oDeliveryJson:has("last_name")
-            then ttCard.delivery_last_name       = oDeliveryJson:GetCharacter("last_name").
-            if oDeliveryJson:has("company_name")
-            then ttCard.delivery_company_name    = oDeliveryJson:GetCharacter("company_name").
-            if oDeliveryJson:has("address1")
-            then ttCard.delivery_address1        = oDeliveryJson:GetCharacter("address1").
-            if oDeliveryJson:has("address2")
-            then ttCard.delivery_address2        = oDeliveryJson:GetCharacter("address2").
-            if oDeliveryJson:has("postal_code")
-            then ttCard.delivery_postal_code     = oDeliveryJson:GetCharacter("postal_code").
-            if oDeliveryJson:has("city")
-            then ttCard.delivery_city            = oDeliveryJson:GetCharacter("city").
-            if oDeliveryJson:has("country_code")
-            then ttCard.delivery_country_code    = oDeliveryJson:GetCharacter("country_code").
-            if oDeliveryJson:has("dispatch_method")
-            then ttCard.delivery_dispatch_method = oDeliveryJson:GetCharacter("dispatch_method").
-            if oDeliveryJson:has("phone")
-            then ttCard.delivery_phone           = oDeliveryJson:GetCharacter("phone").
+            if valid-object(oDeliveryJson)
+            then do:
+                if oDeliveryJson:has("first_name")
+                then ttCard.delivery_first_name      = oDeliveryJson:GetCharacter("first_name").
+                if oDeliveryJson:has("last_name")
+                then ttCard.delivery_last_name       = oDeliveryJson:GetCharacter("last_name").
+                if oDeliveryJson:has("company_name")
+                then ttCard.delivery_company_name    = oDeliveryJson:GetCharacter("company_name").
+                if oDeliveryJson:has("address1")
+                then ttCard.delivery_address1        = oDeliveryJson:GetCharacter("address1").
+                if oDeliveryJson:has("address2")
+                then ttCard.delivery_address2        = oDeliveryJson:GetCharacter("address2").
+                if oDeliveryJson:has("postal_code")
+                then ttCard.delivery_postal_code     = oDeliveryJson:GetCharacter("postal_code").
+                if oDeliveryJson:has("city")
+                then ttCard.delivery_city            = oDeliveryJson:GetCharacter("city").
+                if oDeliveryJson:has("country_code")
+                then ttCard.delivery_country_code    = oDeliveryJson:GetCharacter("country_code").
+                if oDeliveryJson:has("dispatch_method")
+                then ttCard.delivery_dispatch_method = oDeliveryJson:GetCharacter("dispatch_method").
+                if oDeliveryJson:has("phone")
+                then ttCard.delivery_phone           = oDeliveryJson:GetCharacter("phone").
+            end.
         end.
 
         if poJson:has("security")
         then do:
             oSecurityJson = poJson:GetJsonObject("security").
-            ttCard.sec_contactless_enabled       = oSecurityJson:getLogical("contactless_enabled").
-            ttCard.sec_withdrawal_enabled        = oSecurityJson:getLogical("withdrawal_enabled").
-            ttCard.sec_internet_purchase_enabled = oSecurityJson:getLogical("internet_purchase_enabled").
+            if valid-object(oSecurityJson)
+            then do:
+                ttCard.sec_contactless_enabled       = oSecurityJson:getLogical("contactless_enabled").
+                ttCard.sec_withdrawal_enabled        = oSecurityJson:getLogical("withdrawal_enabled").
+                ttCard.sec_internet_purchase_enabled = oSecurityJson:getLogical("internet_purchase_enabled").
+            end.
         end.
 
         finally:
