@@ -3,9 +3,9 @@ def temp-table tt{&prefix}Person no-undo
     field personal_number                        as char     init ?
     field personal_number_issuer                 as char     init ?
     field title_name                             as char     init ?  serialize-name "title" // Miss
-    field first_name                             as char     init ?
-    field middle_name                            as char     init ?
-    field last_name                              as char     init ?
+    field first_name                             as char     init ?  case-sensitive
+    field middle_name                            as char     init ?  case-sensitive
+    field last_name                              as char     init ?  case-sensitive
     field birth_date                             as date     init ? 
     field birth_country_code                     as char     init ?
     field gender                                 as char     init ? // MALE / FEMALE

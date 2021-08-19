@@ -12,7 +12,7 @@ def temp-table tt{&prefix}Card no-undo
     field block_type                       as char     init ?
     field blocked_at                       as datetime init ?
     field card_status                      as char     init ?
-    field embossing_name                   as char     init ?
+    field embossing_name                   as char     init ? case-sensitive
     field renew_automatically              as log      init ?
     field personalization_product_code     as char     init ?
     field card_metadata_profile_id         as char     init ?
