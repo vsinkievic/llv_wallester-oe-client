@@ -2,7 +2,7 @@ def temp-table tt{&prefix}Person no-undo
     field id                                     as char     init ?
     field personal_number                        as char     init ?
     field personal_number_issuer                 as char     init ?
-    field title_name                             as char     init ?  serialize-name "title" // Miss
+    field title_name                             as char     init ?  case-sensitive serialize-name "title" // Miss
     field first_name                             as char     init ?  case-sensitive
     field middle_name                            as char     init ?  case-sensitive
     field last_name                              as char     init ?  case-sensitive
@@ -10,7 +10,7 @@ def temp-table tt{&prefix}Person no-undo
     field birth_country_code                     as char     init ?
     field gender                                 as char     init ? // MALE / FEMALE
     field mobile                                 as char     init ?
-    field email                                  as char     init ?
+    field email                                  as char     init ?  case-sensitive
     field external_id                            as char     init ?
     field residence_country_code                 as char     init ?
     field is_represented_by_someone_else         as logical  init ?
