@@ -48,6 +48,12 @@ class wallester.api.WallesterApiClientItTest:
         oClient = new WallesterApiClient("https://api-sandbox.wallester.eu", "x7BeGHe1uFllio$GcqZbSyjN9oWlM4CTD$2s9@yUXNuI0Cbh6Z674tE0vQb1qiIC").   
         oClient:issuerId = "29a6012b-785e-4579-97a4-38b5ade0064c".
         oClient:audienceId = "da2b9d46-de76-498e-8746-471e8dd3d120".
+ 
+//        oClient = new WallesterApiClient("https://api.wallester.eu", "AJfqYNM7Sby+ydD!PgMd=MDELCmuu!LVRxY+#*5aSV@D9jAjGgGK&8uEYPAchDNp").   
+//        oClient:issuerId = "7fd38a91-3ea2-41e9-a052-7ae7409112de".
+//        oClient:audienceId = "d3326f48-ba65-44c1-860e-6a7bdbc400d8".
+ 
+ 
         oClient:productCode = "LATEKOLV".
         oClient:auditSourceType = "Backend".   
         oClient:dumpDirectory = "target/dump".
@@ -410,6 +416,18 @@ class wallester.api.WallesterApiClientItTest:
         
         // then
         temp-table ttCard:write-json("file", "target/getAllCards.json", true).
+        Assert:isTrue(isOK).
+    end method.
+
+//    @Test.
+    method public void getAllAccounts():
+        // given
+        
+        // when
+        isOk = api:getAllAccounts(0, 1000, auditUser, output table ttAccount).
+        
+        // then
+        temp-table ttAccount:write-json("file", "target/getAllAccounts.json", true).
         Assert:isTrue(isOK).
     end method.
     

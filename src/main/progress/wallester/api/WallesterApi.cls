@@ -43,6 +43,7 @@ interface wallester.api.WallesterApi:
   method public logical updateAccountCreditLimit(pcAccountId as char, pdNewLimit as dec, pdDescription as char, pcAuditUser as char, output table ttAccount).
   method public logical updateAccountLimits(pcAccountId as char, input table ttAccountLimits, pcAuditUser as char, output table ttAccount).
   method public logical updateAccountName(pcAccountId as char, pcNewName as char, pcAuditUser as char, output table ttAccount).
+  method public logical getAllAccounts (piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAccount).
 
   method public logical activateCard (pcPersonId as char, pcLastFourDigits as char, pcAuditUser as char, output table ttCard).
   method public logical activateCard (pcCardId as char, pcAuditUser as char, output table ttCard).
