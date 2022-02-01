@@ -74,6 +74,11 @@ interface wallester.api.WallesterApi:
   
   method public logical getAccountStatement (pcAccountId as char, piFromRecord as int64, piCount as int, input table ttStatementRequestParams, pcAuditUser as char, output table ttStmt).    
   
+  method public char    getEncryptedCardNumber (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
+  method public char    getEncryptedCardPin (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
+  method public char    getEncryptedCardCvv2 (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
+  method public char    getEncryptedCard3dsPassword (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
+  
   method public char    ping(pcMessage as char).
   
 end interface.

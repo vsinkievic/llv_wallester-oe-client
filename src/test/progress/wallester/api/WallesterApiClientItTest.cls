@@ -209,7 +209,7 @@ class wallester.api.WallesterApiClientItTest:
     end method.
     
     
- //   @Test.
+  //  @Test.
     method public void getPersonById():
         // given
         
@@ -222,6 +222,38 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
     
+    @Test.
+    method public void getEncryptedCardNumber():
+        // given
+        def var cPublicKey as char.
+        cPublicKey = "-----BEGIN PUBLIC KEY-----"
+             + "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx5KYjTuXKSe3bAaYCHhP"
+             + "QDVOoNfHyfZ7TLEoC0GVmk1TFHpTcYeJT5PKMp44HwurXugKe4cVsrtl30twZIgR"
+             + "oBF/7IUFUsxSDoFOBdmvIHcrk/X1qsjM9VV6Rl3tPu8pdl23IrI1f3NVpZA+Kgm2"
+             + "CL/bRQlUoi86jhDzSAa4xE6zNcGGFn0fu/B6MBh+o/vgtap+kHwd0NxTAQSJk9yS"
+             + "NAXJlHDeyy/yhrfvGiT1Wb7Bqd48fQJQXVvWrsImex71xreEuFY75mSyzvAJfPFp"
+             + "eFqePRVuH7dbuSo55hYVeRLh+nawdoQTvTzitHZPQxVo7xMfdsES+b1lQWzzE3bq"
+             + "cwIDAQAB"
+             + "-----END PUBLIC KEY-----".
+             
+        cPublicKey = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF4NUtZalR1WEtTZTNiQWFZQ0hoUApRRFZPb05mSHlmWjdUTEVvQzBHVm1rMVRGSHBUY1llSlQ1UEtNcDQ0SHd1clh1Z0tlNGNWc3J0bDMwdHdaSWdSCm9CRi83SVVGVXN4U0RvRk9CZG12SUhjcmsvWDFxc2pNOVZWNlJsM3RQdThwZGwyM0lySTFmM05WcFpBK0tnbTIKQ0wvYlJRbFVvaTg2amhEelNBYTR4RTZ6TmNHR0ZuMGZ1L0I2TUJoK28vdmd0YXAra0h3ZDBOeFRBUVNKazl5UwpOQVhKbEhEZXl5L3locmZ2R2lUMVdiN0JxZDQ4ZlFKUVhWdldyc0ltZXg3MXhyZUV1Rlk3NW1TeXp2QUpmUEZwCmVGcWVQUlZ1SDdkYnVTbzU1aFlWZVJMaCtuYXdkb1FUdlR6aXRIWlBReFZvN3hNZmRzRVMrYjFsUVd6ekUzYnEKY3dJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t".
+     //   cPublicKey = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF4NUtZalR1WEtTZTNiQWFZQ0hoUApRRFZPb05mSHlmWjdUTEVvQzBHVm1rMVRGSHBUY1llSlQ1UEtNcDQ0SHd1clh1Z0tlNGNWc3J0bDMwdHdaSWdSCm9CRi83SVVGVXN4U0RvRk9CZG12SUhjcmsvWDFxc2pNOVZWNlJsM3RQdThwZGwyM0lySTFmM05WcFpBK0tnbTIKQ0wvYlJRbFVvaTg2amhEelNBYTR4RTZ6TmNHR0ZuMGZ1L0I2TUJoK28vdmd0YXAra0h3ZDBOeFRBUVNKazl5UwpOQVhKbEhEZXl5L3locmZ2R2lUMVdiN0JxZDQ4ZlFKUVhWdldyc0ltZXg3MXhyZUV1Rlk3NW1TeXp2QUpmUEZwCmVGcWVQUlZ1SDdkYnVTbzU1aFlWZVJMaCtuYXdkb1FUdlR6aXRIWlBReFZvN3hNZmRzRVMrYjFsUVd6ekUzYnEKY3dJREFRQUI=".
+        def var cEncryptedCardNumber as char no-undo init "".
+        
+        // when
+        cEncryptedCardNumber = api:getEncryptedCardNumber("19757104-e0a3-429d-9d04-a72ef951877a", cPublicKey, auditUser).
+        
+        // then
+        Assert:isTrue(cEncryptedCardNumber > "").
+        output to "target/getEncryptedCardNumber.txt".
+        put unformatted cEncryptedCardNumber skip.
+        output close.
+        
+        // toliau norint atkoduoti pranešimą reikia įvykdyti komandą
+        // cat cardNumberMessage.txt | grep -v MESSAGE | base64 -d | openssl pkeyutl -decrypt -inkey yourPrivateKey.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_label:436172644e756d626572 -pkeyopt rsa_oaep_md:sha256
+        // here 436172644e756d626572  is hex form of "CardNumber"
+        
+    end method.
     
  //   @Test.
     method public void getPersonByExternalId():

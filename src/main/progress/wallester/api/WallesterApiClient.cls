@@ -1380,6 +1380,149 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     end method.
 
+    METHOD PUBLIC CHARACTER getEncryptedCard3dsPassword( INPUT pcCardId AS CHARACTER, INPUT pcPublicKey AS CHARACTER, INPUT pcAuditUser AS CHARACTER ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getEncryptedCard3dsPassword".
+        
+        empty temp-table ttAccount.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("public_key", pcPublicKey).
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", subst("/v1/cards/&1/encrypted-3ds-password", pcCardId), pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            if (oResponseJson:Has("encrypted_3ds_password"))
+            then return oResponseJson:GetCharacter("encrypted_3ds_password").
+            else return "".
+        end.
+        undo, throw new AppError(subst("Failed to getEncryptedCard3dsPassword: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.    
+    END METHOD.
+
+    METHOD PUBLIC CHARACTER getEncryptedCardCvv2( INPUT pcCardId AS CHARACTER, INPUT pcPublicKey AS CHARACTER, INPUT pcAuditUser AS CHARACTER ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getEncryptedCardCvv2".
+        
+        empty temp-table ttAccount.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("public_key", pcPublicKey).
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", subst("/v1/cards/&1/encrypted-cvv2", pcCardId), pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            if (oResponseJson:Has("encrypted_cvv2"))
+            then return oResponseJson:GetCharacter("encrypted_cvv2").
+            else return "".
+        end.
+        undo, throw new AppError(subst("Failed to getEncryptedCardCvv2: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    END METHOD.
+
+    METHOD PUBLIC CHARACTER getEncryptedCardNumber( INPUT pcCardId AS CHARACTER, INPUT pcPublicKey AS CHARACTER, pcAuditUser as char ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getEncryptedCardNumber".
+        
+        empty temp-table ttAccount.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("public_key", pcPublicKey).
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", subst("/v1/cards/&1/encrypted-card-number", pcCardId), pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            if (oResponseJson:Has("encrypted_card_number"))
+            then return oResponseJson:GetCharacter("encrypted_card_number").
+            else return "".
+        end.
+        undo, throw new AppError(subst("Failed to getEncryptedCardNumber: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    END METHOD.
+
+    METHOD PUBLIC CHARACTER getEncryptedCardPin( INPUT pcCardId AS CHARACTER, INPUT pcPublicKey AS CHARACTER, INPUT pcAuditUser AS CHARACTER ):
+        def var oRequestJson as JsonObject no-undo.
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getEncryptedCardPin".
+        
+        empty temp-table ttAccount.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        
+        oRequestJson = new JsonObject().
+        oRequestJson:add("public_key", pcPublicKey).
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("POST", subst("/v1/cards/&1/encrypted-pin", pcCardId), pcAuditUser, oRequestJson).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            if (oResponseJson:Has("encrypted_pin"))
+            then return oResponseJson:GetCharacter("encrypted_pin").
+            else return "".
+        end.
+        undo, throw new AppError(subst("Failed to getEncryptedCardPin: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.    END METHOD.
+
     method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
