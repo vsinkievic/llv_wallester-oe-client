@@ -15,6 +15,8 @@ def temp-table tt{&prefix}Person no-undo
     field residence_country_code                 as char     init ?
     field is_represented_by_someone_else         as logical  init ?
     field is_beneficial_owner                    as logical  init ?
+    field is_sanctions_related                   as logical  init ?
+    field is_adverse_media_involved              as logical  init ?
     field is_pep                                 as logical  init ?  serialize-name "is_politically_exposed_person"
     field pep_explanation                        as char     init ?  serialize-name "politically_exposed_person_explanation"
     field business_relationship_purpose          as char     init ?

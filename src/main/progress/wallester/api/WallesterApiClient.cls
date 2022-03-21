@@ -609,6 +609,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oPersonJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
         oPersonJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
         oPersonJson:add("is_politically_exposed_person", ttPerson.is_pep).
+        oPersonJson:add("is_sanctions_related",          ttPerson.is_sanctions_related).
+        oPersonJson:add("is_adverse_media_involved",     ttPerson.is_adverse_media_involved).
         oPersonJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
         oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
         oPersonJson:add("risk_profile",           ttPerson.risk_profile).
@@ -668,6 +670,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         ttPerson.residence_country_code = poJson:getCharacter("residence_country_code").
         ttPerson.is_represented_by_someone_else = poJson:GetLogical("is_represented_by_someone_else").
         ttPerson.is_beneficial_owner    = poJson:GetLogical("is_beneficial_owner").
+        ttPerson.is_sanctions_related   = poJson:getLogical("is_sanctions_related").
+        ttPerson.is_adverse_media_involved = poJson:getLogical("is_adverse_media_involved").
         ttPerson.is_pep                 = poJson:getLogical("is_politically_exposed_person").
         if poJson:has("politically_exposed_person_explanation")
         then ttPerson.pep_explanation        = poJson:getCharacter("politically_exposed_person_explanation").
@@ -2318,6 +2322,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oPersonJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
         oPersonJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
         oPersonJson:add("is_politically_exposed_person", ttPerson.is_pep).
+        oPersonJson:add("is_sanctions_related",          ttPerson.is_sanctions_related).
+        oPersonJson:add("is_adverse_media_involved",     ttPerson.is_adverse_media_involved).
         oPersonJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
         oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
         oPersonJson:add("risk_profile",           ttPerson.risk_profile).
