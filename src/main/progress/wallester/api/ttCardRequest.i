@@ -11,12 +11,13 @@ def temp-table tt{&prefix}CardRequest no-undo
 //    field block_type as char
 //    field blocked_at as datetime
 //    field card_status as char
-//    field embossing_name as char
+    field embossing_name as char
 //    field renew_automatically as log
     field personalization_product_code     as char    init ?
     field expiry_days                      as int     init 1095 // 1....1825 - up to 5 years
     field expiry_days_round                as logical init true
     field encrypted_pin                    as char    init ?
+    field is_disposable                    as logical init ?    // aplicable for Virtual card only
 //    field card_metadata_profile_id as char
 //    field activated_at as datetime
 //    field created_at as datetime

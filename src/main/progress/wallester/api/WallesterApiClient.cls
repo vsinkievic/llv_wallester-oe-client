@@ -498,6 +498,12 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("type",                        ttCardRequest.card_type).
         if ttCardRequest.card_name > ""
         then oRequestJson:add("name",                   ttCardRequest.card_name).
+        
+        if ttCardRequest.embossing_name > ""
+        then oRequestJson:add("embossing_name",         ttCardRequest.embossing_name).
+        
+        if (ttCardRequest.is_disposable <> ?)
+        then oRequestJson:add("is_disposable",          ttCardRequest.is_disposable).
 
         oSecurityJson = new JsonObject().
         oSecurityJson:Add("contactless_enabled", ttCardRequest.sec_contactless_enabled).
@@ -515,12 +521,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oDeliveryJson = new JsonObject().
         if (ttCardRequest.delivery_company_name > "")
         then oDeliveryJson:add("company_name",    ttCardRequest.delivery_company_name).
-        oDeliveryJson:add("address1",        ttCardRequest.delivery_address1).
+        if ttCardRequest.delivery_address1 > ""
+        then oDeliveryJson:add("address1",        ttCardRequest.delivery_address1).
         if ttCardRequest.delivery_address2 > ""
         then oDeliveryJson:add("address2",        ttCardRequest.delivery_address2).
-        oDeliveryJson:add("postal_code",     ttCardRequest.delivery_postal_code).
-        oDeliveryJson:add("city",            ttCardRequest.delivery_city).
-        oDeliveryJson:add("country_code",    ttCardRequest.delivery_country_code).
+        if ttCardRequest.delivery_postal_code > ""
+        then oDeliveryJson:add("postal_code",     ttCardRequest.delivery_postal_code).
+        if ttCardRequest.delivery_city > ""
+        then oDeliveryJson:add("city",            ttCardRequest.delivery_city).
+        if ttCardRequest.delivery_country_code > ""
+        then oDeliveryJson:add("country_code",    ttCardRequest.delivery_country_code).
         if ttCardRequest.delivery_dispatch_method > ""
         then oDeliveryJson:add("dispatch_method", ttCardRequest.delivery_dispatch_method).
         if ttCardRequest.delivery_phone > ""
@@ -910,6 +920,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         ttCard.expiry_date         = poJson:GetDatetime("expiry_date").
         ttCard.card_status         = poJson:GetCharacter("status").    
         ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
+        if poJson:has("is_disposable")
+        then ttCard.is_disposable = poJson:getLogical("is_disposable").
         if poJson:has("is_enrolled_for_3d_secure")
         then ttCard.is_enrolled_for_3ds = poJson:getLogical("is_enrolled_for_3d_secure").
         if poJson:has("is_card_3d_secure_activated")

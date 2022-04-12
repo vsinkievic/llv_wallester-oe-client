@@ -14,6 +14,7 @@ def temp-table tt{&prefix}Card no-undo
     field card_status                      as char     init ?
     field embossing_name                   as char     init ? case-sensitive
     field renew_automatically              as log      init ?
+    field is_disposable                    as log      init ?
     field personalization_product_code     as char     init ?
     field card_metadata_profile_id         as char     init ?
     field activated_at                     as datetime init ?
