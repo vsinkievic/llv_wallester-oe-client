@@ -1802,7 +1802,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end case.
         
         cRequestBody = poRequestJson:getJsonText().
-        message string(cRequestBody) view-as alert-box title "Request JSON".
+    //    message string(cRequestBody) view-as alert-box title "Request JSON".
         cJwtToken = Jwt:builder()
                        :setIssuer(this-object:issuerId)
                        :setAudience(this-object:audienceId)
