@@ -518,24 +518,30 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         o3dsJson:add("password", ttCardRequest.sec_3ds_password).
         oRequestJson:add("3d_secure_settings", o3dsJson).
         
-        oDeliveryJson = new JsonObject().
-        if (ttCardRequest.delivery_company_name > "")
-        then oDeliveryJson:add("company_name",    ttCardRequest.delivery_company_name).
-        if ttCardRequest.delivery_address1 > ""
-        then oDeliveryJson:add("address1",        ttCardRequest.delivery_address1).
-        if ttCardRequest.delivery_address2 > ""
-        then oDeliveryJson:add("address2",        ttCardRequest.delivery_address2).
-        if ttCardRequest.delivery_postal_code > ""
-        then oDeliveryJson:add("postal_code",     ttCardRequest.delivery_postal_code).
-        if ttCardRequest.delivery_city > ""
-        then oDeliveryJson:add("city",            ttCardRequest.delivery_city).
-        if ttCardRequest.delivery_country_code > ""
-        then oDeliveryJson:add("country_code",    ttCardRequest.delivery_country_code).
-        if ttCardRequest.delivery_dispatch_method > ""
-        then oDeliveryJson:add("dispatch_method", ttCardRequest.delivery_dispatch_method).
-        if ttCardRequest.delivery_phone > ""
-        then oDeliveryJson:add("phone",           ttCardRequest.delivery_phone).
-        oRequestJson:add("delivery_address", oDeliveryJson).
+        if ttCardRequest.card_type > "" and ttCardRequest.card_type = "Virtual"
+        then do:
+            oRequestJson:addNull("delivery_address").
+        end.
+        else do:    
+            oDeliveryJson = new JsonObject().
+            if (ttCardRequest.delivery_company_name > "")
+            then oDeliveryJson:add("company_name",    ttCardRequest.delivery_company_name).
+            if ttCardRequest.delivery_address1 > ""
+            then oDeliveryJson:add("address1",        ttCardRequest.delivery_address1).
+            if ttCardRequest.delivery_address2 > ""
+            then oDeliveryJson:add("address2",        ttCardRequest.delivery_address2).
+            if ttCardRequest.delivery_postal_code > ""
+            then oDeliveryJson:add("postal_code",     ttCardRequest.delivery_postal_code).
+            if ttCardRequest.delivery_city > ""
+            then oDeliveryJson:add("city",            ttCardRequest.delivery_city).
+            if ttCardRequest.delivery_country_code > ""
+            then oDeliveryJson:add("country_code",    ttCardRequest.delivery_country_code).
+            if ttCardRequest.delivery_dispatch_method > ""
+            then oDeliveryJson:add("dispatch_method", ttCardRequest.delivery_dispatch_method).
+            if ttCardRequest.delivery_phone > ""
+            then oDeliveryJson:add("phone",           ttCardRequest.delivery_phone).
+            oRequestJson:add("delivery_address", oDeliveryJson).
+        end.
         
         if _anyLimitFieldHasValue()
         then do:
@@ -1796,7 +1802,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end case.
         
         cRequestBody = poRequestJson:getJsonText().
-    //    message string(cRequestBody) view-as alert-box title "Request JSON".
+        message string(cRequestBody) view-as alert-box title "Request JSON".
         cJwtToken = Jwt:builder()
                        :setIssuer(this-object:issuerId)
                        :setAudience(this-object:audienceId)
