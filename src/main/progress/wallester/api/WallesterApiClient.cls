@@ -664,7 +664,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
         create ttPerson.
         ttPerson.id = poJson:GetCharacter("id").
-        ttPerson.personal_number = poJson:GetCharacter("personal_number").
+        if poJson:has("personal_number")
+        then ttPerson.personal_number = poJson:GetCharacter("personal_number").
         if poJson:has("personal_number_issuer")
         then ttPerson.personal_number_issuer = poJson:getCharacter("personal_number_issuer").
         if poJson:has("title")
@@ -673,7 +674,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if poJson:has("middle_name")
         then ttPerson.middle_name            = poJson:getCharacter("middle_name").
         ttPerson.last_name              = poJson:getCharacter("last_name").
-        ttPerson.birth_date             = poJson:GetDate("birth_date").
+        if poJson:has("birth_date")
+        then ttPerson.birth_date             = poJson:GetDate("birth_date").
         if poJson:has("birth_country_code")
         then ttPerson.birth_country_code     = poJson:GetCharacter("birth_country_code").
         if poJson:has("gender")
