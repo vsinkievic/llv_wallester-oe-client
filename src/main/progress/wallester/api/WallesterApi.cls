@@ -68,6 +68,7 @@ interface wallester.api.WallesterApi:
   method public logical getAccountAuthorizations (pcAccountId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   method public logical getCardAuthorizations (pcCardId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
 
+  method public logical getTransactionById (pcTransactionId as char, pcAuditUser as char, output table ttTrn).
   method public logical getAllTransactions (piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   method public logical getAccountTransactions (pcAccountId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   method public logical getCardTransactions (pcCardId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).

@@ -797,12 +797,80 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method protected void _parseTransaction (poJson as JsonObject):
+        if not valid-object(poJson)
+        then return.
+        
+        create ttTrn.
+        ttTrn.id                              = poJson:GetCharacter("id").
+        if poJson:has("card_id")              
+        then ttTrn.card_id                    = poJson:getCharacter("card_id").
+        if poJson:has("purchase_date")
+        then ttTrn.purchase_date              = poJson:GetDatetimeTZ("purchase_date").
+        if poJson:has("group")                
+        then ttTrn.tx_group                   = poJson:getCharacter("group").
+        if poJson:has("transaction_amount")
+        then ttTrn.transaction_amount         = poJson:getDecimal("transaction_amount").
+        if poJson:has("transaction_currency_code")
+        then ttTrn.transaction_currency_code  = poJson:getCharacter("transaction_currency_code").
+        if poJson:has("account_amount")
+        then ttTrn.account_amount             = poJson:getDecimal("account_amount").
+        if poJson:has("account_currency_code")
+        then ttTrn.account_currency_code      = poJson:getCharacter("account_currency_code").
+        if poJson:has("foreign_exchange_fee")
+        then ttTrn.foreign_exchange_fee       = poJson:getDecimal("foreign_exchange_fee").
+
+        if poJson:has("merchant_category_code")
+        then ttTrn.merchant_category_code     = poJson:getCharacter("merchant_category_code").
+        if poJson:has("merchant_id")
+        then ttTrn.merchant_id                = poJson:getCharacter("merchant_id").
+        if poJson:has("terminal_id")           
+        then ttTrn.terminal_id                = poJson:getCharacter("terminal_id").
+        if poJson:has("merchant_name")         
+        then ttTrn.merchant_name              = poJson:getCharacter("merchant_name").
+        if poJson:has("merchant_city")         
+        then ttTrn.merchant_city              = poJson:getCharacter("merchant_city").
+        if poJson:has("merchant_country_code")
+        then ttTrn.merchant_country_code      = poJson:getCharacter("merchant_country_code").
+
+        if poJson:has("acquirer_reference_number")         
+        then ttTrn.acquirer_reference_number  = poJson:getCharacter("acquirer_reference_number").
+        if poJson:has("acquirer_business_id")
+        then ttTrn.acquirer_business_id       = poJson:getCharacter("acquirer_business_id").
+
+
+        if poJson:has("transaction_code")         
+        then ttTrn.transaction_code            = poJson:getCharacter("transaction_code").
+        if poJson:has("transaction_identifier")
+        then ttTrn.transaction_identifier      = poJson:getCharacter("transaction_identifier").
+
+        if poJson:has("authorization_id")
+        then ttTrn.authorization_id  = poJson:getCharacter("authorization_id").
+
+        if poJson:has("marked_for_dispute_at")
+        then ttTrn.marked_for_dispute_at       = poJson:GetDatetime("marked_for_dispute_at").
+        if poJson:has("marked_for_dispute_by")
+        then ttTrn.marked_for_dispute_by       = poJson:getCharacter("marked_for_dispute_by").
+
+        if poJson:has("created_at")
+        then ttTrn.created_at                  = poJson:GetDatetimeTZ("created_at").
+        if poJson:has("processed_at")
+        then ttTrn.processed_at                = poJson:GetDatetimeTZ("processed_at").
+
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+        end finally.
+    end method.
+    
+    
     method protected void _parseAccountStatement (pcAccountId as char, poJson as JsonArray):
         def var oStatementJson as JsonObject no-undo.
         def var i as int no-undo.
 
         if not valid-object(poJson)
         then return.
+
+        poJson:WriteFile("target/statement_response.json", true).
         
         do i = 1 to poJson:Length:
             oStatementJson = poJson:GetJsonObject(i).
@@ -1686,6 +1754,33 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
     end method.
+
+    METHOD PUBLIC LOGICAL getTransactionById( INPUT pcTransactionId AS CHARACTER, INPUT pcAuditUser AS CHARACTER, OUTPUT TABLE FOR ttTrn ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getTransaction".
+        
+        empty temp-table ttTrn.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        oResponse = _executeRequest("GET", subst("/v1/transactions/&1", pcTransactionId), pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseTransaction(oResponseJson:GetJsonObject("transaction")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get transaction: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    END METHOD.
 
     method public logical linkCardToAccount( input pcCardId as character, input pcAccountId as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.

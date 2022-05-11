@@ -38,35 +38,36 @@ def temp-table tt{&prefix}Auth no-undo before-table ttb{&prefix}Auth
     .
     
 def temp-table tt{&prefix}Trn no-undo before-table ttb{&prefix}Trn
-    field id as char
-    field authorization_id as char
-    field account_id as char
-    field card_id    as char
-    field purchase_date as datetime
-    field transaction_amount as dec
-    field transaction_currency_code as char
-    field account_amount as dec
-    field account_currency_code as char
-    field foreign_exchange_fee as dec
-    field merchant_category_code as char
-    field merchant_id as char
-    field terminal_id as char
-    field merchant_name as char
-    field merchant_city as char
-    field merchant_country_code as char
-    field created_at as datetime
-    field tx_group as char
-    field marked_for_dispute_at as datetime
-    field marked_for_dispute_by as char
-    field merchant_postal_code as char
-    field acquirer_reference_number as char
-    field acquirer_business_id      as char
-    field transaction_code as char
-    field transaction_identifier as char
-    field processed_at as datetime
+    field id                        as char        init ?
+    field authorization_id          as char        init ?
+    field account_id                as char        init ?
+    field card_id                   as char        init ?
+    field purchase_date             as datetime-tz init ?
+    field transaction_amount        as dec         init ?
+    field transaction_currency_code as char        init ?
+    field account_amount            as dec         init ?
+    field account_currency_code     as char        init ?
+    field foreign_exchange_fee      as dec         init ?
+    field merchant_category_code    as char        init ?
+    field merchant_id               as char        init ?
+    field terminal_id               as char        init ?
+    field merchant_name             as char        init ?
+    field merchant_city             as char        init ?
+    field merchant_country_code     as char        init ?
+    field created_at                as datetime-tz init ?
+    field tx_group                  as char        init ?
+    field marked_for_dispute_at     as datetime    init ?
+    field marked_for_dispute_by     as char        init ?
+    field merchant_postal_code      as char        init ?
+    field acquirer_reference_code   as char        init ?
+    field acquirer_reference_number as char        init ?
+    field acquirer_business_id      as char        init ?
+    field transaction_code          as char        init ?
+    field transaction_identifier    as char        init ?
+    field processed_at              as datetime-tz init ?
     index pk is primary unique id
     .
-    
+
 def temp-table tt{&prefix}Fee no-undo before-table ttb{&prefix}Fee   
     field id as char
     field authorization_id as char

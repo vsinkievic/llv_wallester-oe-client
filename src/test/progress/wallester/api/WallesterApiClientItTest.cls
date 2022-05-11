@@ -954,7 +954,7 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
     
-    @Test.
+ //   @Test.
     method public void getAccountStatement():
         // given
         create ttStatementRequestParams.
@@ -967,7 +967,8 @@ class wallester.api.WallesterApiClientItTest:
 //        ttStatementRequestParams.to_date   = now.
         
         // when
-        isOk = api:getAccountStatement("e7e91696-500d-4cb5-a353-582f45ef01bf", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
+     //   isOk = api:getAccountStatement("e7e91696-500d-4cb5-a353-582f45ef01bf", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
+        isOk = api:getAccountStatement("d516fd6f-9632-45cd-abbf-a042dac91b60", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
         
         // then
         Assert:isTrue(isOk).
@@ -977,6 +978,21 @@ class wallester.api.WallesterApiClientItTest:
             
         end.
         
+    end method.
+
+  //  @Test.
+    method public void getTransaction():
+        // given
+        
+        // when
+        isOk = api:getTransactionById("fc14f376-e317-444c-b2ec-5d53a28b41a0", auditUser, output table ttTrn).
+        
+        // then
+        Assert:isTrue(isOk).
+        temp-table ttTrn:write-json("file", "target/getTransactionById.json", true).
+        
+        find first ttTrn.
+        message date(ttTrn.processed_at).
     end method.
     
 end class.
