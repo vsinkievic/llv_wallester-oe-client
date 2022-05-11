@@ -28,6 +28,7 @@ class wallester.api.WallesterApiClientItTest:
   {wallester/api/ttCard.i}
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
+  {wallester/api/ttFile.i}
   {wallester/api/ttPerson.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
@@ -97,6 +98,7 @@ class wallester.api.WallesterApiClientItTest:
         empty temp-table ttAccountLimits.
         empty temp-table ttStatementRequestParams.
         empty temp-table ttStmt.
+        empty temp-table ttFile.
         dataset dsStatement:empty-dataset ().
 
     end method.
@@ -995,4 +997,43 @@ class wallester.api.WallesterApiClientItTest:
         message date(ttTrn.processed_at).
     end method.
     
+    // @Test.
+    method public void getListOfDirectories():
+        // given
+        
+        // when
+        isOk = api:getListOfDirectories(auditUser, output table ttFile).
+        
+        // then 
+        Assert:isTrue(isOk).
+        temp-table ttFile:write-json("file", "target/getListOfDirectories.json", true).
+        
+    end method.
+
+//    @Test.
+    method public void getDirectoryIndex():
+        // given
+        
+        // when
+        isOk = api:getDirectoryIndex( "transactions-extract", auditUser, output table ttFile).
+        
+        // then 
+        Assert:isTrue(isOk).
+        temp-table ttFile:write-json("file", "target/getDirectoryIndex.json", true).
+        
+    end method.
+
+//    @Test.
+    method public void downloadFile():
+        // given
+        def var cOutputDirectory as char no-undo init "target".
+        
+        // when
+        isOk = api:downloadFile( "transactions-extract", "LATEKOLV_transactions_20210913_20210914010001.csv", cOutputDirectory, auditUser).
+        
+        // then 
+        Assert:isTrue(isOk).
+        
+    end method.
+
 end class.

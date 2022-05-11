@@ -38,6 +38,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
   {wallester/api/ttCard.i}
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
+  {wallester/api/ttFile.i}
   {wallester/api/ttPerson.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
@@ -778,6 +779,46 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
+    method protected void _parseDirectoryList (poJson as JsonArray):
+        def var i as int no-undo.
+
+        if not valid-object(poJson)
+        then return.
+        
+        do i = 1 to poJson:Length:
+            create ttFile.
+            ttFile.name = poJson:GetCharacter(i).
+        end.
+        
+        finally:
+            if valid-object(poJson)      then delete object poJson.   
+        end finally.
+    end method.
+
+    method protected void _parseFileList (poJson as JsonArray):
+        def var i as int no-undo.
+        def var oFile as JsonObject no-undo.
+
+        if not valid-object(poJson)
+        then return.
+        
+        do i = 1 to poJson:Length:
+            oFile = poJson:GetJsonObject(i).
+            if valid-object (oFile)
+            then do: 
+                create ttFile.
+                ttFile.name = oFile:GetCharacter("name").
+                
+                delete object oFile.
+            end.
+        end.
+        
+        finally:
+            if valid-object(poJson)      then delete object poJson.
+            if valid-object(oFile)       then delete object oFile.   
+        end finally.
+    end method.
+
 
     method protected void _parseAccounts (poJson as JsonArray):
         def var oAccountJson as JsonObject no-undo.
@@ -1122,6 +1163,36 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oCardJson) then delete object oCardJson.         
         end finally.
     end method.
+
+    METHOD PUBLIC LOGICAL downloadFile( INPUT pcDirectoryName AS CHARACTER, INPUT pcFileName AS CHARACTER, INPUT pcSaveInDirectory AS CHARACTER, INPUT pcAuditUser AS CHARACTER ):
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "downloadFile".
+        def var oResponseString as OpenEdge.Core.String no-undo.
+        def var cFileContent as longchar no-undo.
+        
+        empty temp-table ttAccount.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("GET", subst("/v1/extract-files/&1/&2", pcDirectoryName, pcFileName), pcAuditUser).
+
+        if type-of(oResponse:Entity, "OpenEdge.Core.String")
+        then do:
+            oResponseString = cast(oResponse:Entity, "OpenEdge.Core.String").
+            
+            cFileContent = oResponseString:Value.
+            copy-lob cFileContent to file subst("&1/&2", pcSaveInDirectory, pcFileName).
+            
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to download file &1/&2: unsupported response type: &3", pcDirectoryName, pcFileName, oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseString) then delete object oResponseString.
+            if valid-object(oResponse)       then delete object oResponse.            
+        end finally.
+    END METHOD.
 
     method public logical enrolCardFor3Dsecure( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
         
@@ -1472,6 +1543,34 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     end method.
 
+    METHOD PUBLIC LOGICAL getDirectoryIndex( INPUT pcDirectoryName AS CHARACTER, INPUT pcAuditUser AS CHARACTER, OUTPUT TABLE FOR ttFile ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getDirectoryIndex".
+        
+        empty temp-table ttFile.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("GET", subst("/v1/extract-files/&1", pcDirectoryName), pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseFileList(oResponseJson:GetJsonArray("files")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get list of directory &1: unsupported response type: &2", pcDirectoryName, oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.      
+        end finally.
+    END METHOD.
+
     METHOD PUBLIC CHARACTER getEncryptedCard3dsPassword( INPUT pcCardId AS CHARACTER, INPUT pcPublicKey AS CHARACTER, INPUT pcAuditUser AS CHARACTER ):
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
@@ -1614,6 +1713,34 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oResponseJson)  then delete object oResponseJson.
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.    END METHOD.
+
+    METHOD PUBLIC LOGICAL getListOfDirectories( INPUT pcAuditUser AS CHARACTER, OUTPUT TABLE FOR ttFile ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getListOfDirectories".
+        
+        empty temp-table ttFile.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+//        if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
+        oResponse = _executeRequest("GET", "/v1/extract-files", pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            _parseDirectoryList(oResponseJson:GetJsonArray("directories")).
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get list of directories: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.      
+        end finally.
+    END METHOD.
 
     method public logical getPersonAccounts( input pcPersonId as character, input pcAuditUser as character, output TABLE for ttAccount ):
         def var oResponseJson as JsonObject no-undo.

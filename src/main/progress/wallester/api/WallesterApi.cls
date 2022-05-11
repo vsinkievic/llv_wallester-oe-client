@@ -22,6 +22,7 @@ interface wallester.api.WallesterApi:
   {wallester/api/ttCard.i}
   {wallester/api/ttCardLimits.i}
   {wallester/api/ttCardRequest.i}
+  {wallester/api/ttFile.i}
   {wallester/api/ttPerson.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
@@ -74,6 +75,10 @@ interface wallester.api.WallesterApi:
   method public logical getCardTransactions (pcCardId as char, ptFromDate as datetime, ptTillDate as datetime, piFromRecord as int64, piCount as int, pcAuditUser as char, output table ttAuth).
   
   method public logical getAccountStatement (pcAccountId as char, piFromRecord as int64, piCount as int, input table ttStatementRequestParams, pcAuditUser as char, output table ttStmt).    
+
+  method public logical getListOfDirectories (pcAuditUser as char, output table ttFile).
+  method public logical getDirectoryIndex (pcDirectoryName as char, pcAuditUser as char, output table ttFile).
+  method public logical downloadFile(pcDirectoryName as char, pcFileName as char, pcSaveInDirectory as char, pcAuditUser as char).
   
   method public char    getEncryptedCardNumber (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
   method public char    getEncryptedCardPin (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
