@@ -911,7 +911,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if not valid-object(poJson)
         then return.
 
-        poJson:WriteFile("target/statement_response.json", true).
+   //     poJson:WriteFile("target/statement_response.json", true).
         
         do i = 1 to poJson:Length:
             oStatementJson = poJson:GetJsonObject(i).
