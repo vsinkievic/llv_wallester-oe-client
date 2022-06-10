@@ -65,6 +65,8 @@ def temp-table tt{&prefix}Trn no-undo before-table ttb{&prefix}Trn
     field transaction_code          as char        init ?
     field transaction_identifier    as char        init ?
     field processed_at              as datetime-tz init ?
+    field is_failed                 as logical     init ?
+    field central_processing_date   as datetime-tz init ?
     index pk is primary unique id
     .
 

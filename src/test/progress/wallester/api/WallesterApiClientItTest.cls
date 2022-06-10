@@ -982,12 +982,12 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
 
-  //  @Test.
+    // @Test.
     method public void getTransaction():
         // given
         
         // when
-        isOk = api:getTransactionById("fc14f376-e317-444c-b2ec-5d53a28b41a0", auditUser, output table ttTrn).
+        isOk = api:getTransactionById("a1a97855-cbee-4a0a-be8a-34207b83c7a6", auditUser, output table ttTrn).
         
         // then
         Assert:isTrue(isOk).
@@ -1010,7 +1010,7 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
 
-//    @Test.
+    // @Test.
     method public void getDirectoryIndex():
         // given
         

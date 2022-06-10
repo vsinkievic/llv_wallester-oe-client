@@ -861,6 +861,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if poJson:has("foreign_exchange_fee")
         then ttTrn.foreign_exchange_fee       = poJson:getDecimal("foreign_exchange_fee").
 
+        if poJson:has("is_failed")
+        then ttTrn.is_failed                  = poJson:getLogical("is_failed").
         if poJson:has("merchant_category_code")
         then ttTrn.merchant_category_code     = poJson:getCharacter("merchant_category_code").
         if poJson:has("merchant_id")
@@ -886,7 +888,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttTrn.transaction_identifier      = poJson:getCharacter("transaction_identifier").
 
         if poJson:has("authorization_id")
-        then ttTrn.authorization_id  = poJson:getCharacter("authorization_id").
+        then ttTrn.authorization_id            = poJson:getCharacter("authorization_id").
 
         if poJson:has("marked_for_dispute_at")
         then ttTrn.marked_for_dispute_at       = poJson:GetDatetime("marked_for_dispute_at").
@@ -897,6 +899,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttTrn.created_at                  = poJson:GetDatetimeTZ("created_at").
         if poJson:has("processed_at")
         then ttTrn.processed_at                = poJson:GetDatetimeTZ("processed_at").
+        if poJson:has("central_processing_date")
+        then ttTrn.central_processing_date     = poJson:GetDatetimeTZ("central_processing_date").
 
         finally:
             if valid-object(poJson)      then delete object poJson.   
