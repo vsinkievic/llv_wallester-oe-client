@@ -32,6 +32,7 @@ class wallester.api.WallesterApiClientItTest:
   {wallester/api/ttPerson.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
+  {wallester/api/ttReservedBalance.i}
       
     def var api as WallesterApi no-undo.
     def var isOK as log no-undo.
@@ -956,7 +957,7 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
     
- //   @Test.
+  //  @Test.
     method public void getAccountStatement():
         // given
         create ttStatementRequestParams.
@@ -982,12 +983,12 @@ class wallester.api.WallesterApiClientItTest:
         
     end method.
 
-    // @Test.
+//    @Test.
     method public void getTransaction():
         // given
         
         // when
-        isOk = api:getTransactionById("a1a97855-cbee-4a0a-be8a-34207b83c7a6", auditUser, output table ttTrn).
+        isOk = api:getTransactionById("1b768eeb-3d82-43da-9af2-07974f18ba90", auditUser, output table ttTrn).
         
         // then
         Assert:isTrue(isOk).
@@ -1034,6 +1035,20 @@ class wallester.api.WallesterApiClientItTest:
         // then 
         Assert:isTrue(isOk).
         
+    end method.
+    
+//    @Test.
+    method public void getReservedSettlementBalance():
+        // given
+        
+        // when
+        isOk = api:getReservedSettlementBalance(auditUser, output table ttReservedBalance).
+        
+        // then
+        temp-table ttReservedBalance:write-json("file", "target/ttReservedBalance.json", true).
+        Assert:isTrue(isOk).
+        find ttReservedBalance no-error.
+        Assert:IsAvailable(buffer ttReservedBalance:handle).
     end method.
 
 end class.

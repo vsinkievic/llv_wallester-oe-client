@@ -24,6 +24,7 @@ interface wallester.api.WallesterApi:
   {wallester/api/ttCardRequest.i}
   {wallester/api/ttFile.i}
   {wallester/api/ttPerson.i}
+  {wallester/api/ttReservedBalance.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
   
@@ -84,6 +85,8 @@ interface wallester.api.WallesterApi:
   method public char    getEncryptedCardPin (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
   method public char    getEncryptedCardCvv2 (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
   method public char    getEncryptedCard3dsPassword (pcCardId as char, pcPublicKey as char, pcAuditUser as char).
+ 
+  method public logical getReservedSettlementBalance (pcAuditUser as char, output table ttReservedBalance).
   
   method public char    ping(pcMessage as char).
   

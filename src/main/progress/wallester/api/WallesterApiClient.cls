@@ -40,6 +40,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
   {wallester/api/ttCardRequest.i}
   {wallester/api/ttFile.i}
   {wallester/api/ttPerson.i}
+  {wallester/api/ttReservedBalance.i}
   {wallester/api/ttStatementRequestParams.i}
   {wallester/api/ttStmt.i}
     
@@ -1885,6 +1886,44 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.
     end method.
+
+    METHOD PUBLIC logical getReservedSettlementBalance( INPUT pcAuditUser AS CHARACTER, OUTPUT TABLE FOR ttReservedBalance ):
+        def var oResponseJson as JsonObject no-undo.
+        def var oResponse as IHttpResponse no-undo.
+        def var lDumpEnabled as log no-undo init false.
+        def var cEndpointName as char no-undo init "getReservedSettlementBalance".
+        
+        empty temp-table ttReservedBalance.        
+        
+        lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        oResponse = _executeRequest("GET", "/v1/reserved-settlement-balance", pcAuditUser).
+
+        if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
+        then do:
+            oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
+            if not valid-object(oResponseJson)
+            then return false.
+            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+
+            create ttReservedBalance.
+            if oResponseJson:has("amount")
+            then ttReservedBalance.amount = oResponseJson:getDecimal("amount").
+            if oResponseJson:has("authorizations_count")
+            then ttReservedBalance.authorizations_count = oResponseJson:GetInteger("authorizations_count").
+            if oResponseJson:has("authorizations_total_reserved_amount")
+            then ttReservedBalance.authorizations_tot_amt = oResponseJson:getDecimal("authorizations_total_reserved_amount").
+            if oResponseJson:has("currency_code")
+            then ttReservedBalance.currency_code = oResponseJson:getCharacter("currency_code").
+
+            return true.
+        end.
+        undo, throw new AppError(subst("Failed to get transaction: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
+
+        finally:
+            if valid-object(oResponseJson)  then delete object oResponseJson.
+            if valid-object(oResponse)      then delete object oResponse.            
+        end finally.
+    END METHOD.
 
     METHOD PUBLIC LOGICAL getTransactionById( INPUT pcTransactionId AS CHARACTER, INPUT pcAuditUser AS CHARACTER, OUTPUT TABLE FOR ttTrn ):
         def var oResponseJson as JsonObject no-undo.
