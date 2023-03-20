@@ -1041,7 +1041,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttCard.reference_number    = poJson:getCharacter("reference_number").
         ttCard.expiry_date         = poJson:GetDatetime("expiry_date").
         ttCard.card_status         = poJson:GetCharacter("status").    
-        ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
+        if poJson:has("embossing_name")
+        then ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
         if poJson:has("is_disposable")
         then ttCard.is_disposable = poJson:getLogical("is_disposable").
         if poJson:has("is_enrolled_for_3d_secure")
