@@ -924,8 +924,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end.
         
         finally:
-            if valid-object(poJson)         then delete object poJson.   
-            if valid-object(oStatementJson) then delete object oStatementJson.         
+            // Workaround for https://community.progress.com/s/article/memory-violation-when-deleting-a-jsonarray  
+            // if valid-object(poJson)         then delete object poJson.   
+            if valid-object(oStatementJson) then delete object oStatementJson.     
         end finally.
     end method.
 
@@ -987,9 +988,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if poJson:has("response")
         then ttStmt.response      = poJson:getCharacter("response").
 
-        finally:
-            if valid-object(poJson)      then delete object poJson.   
-        end finally.
+        // Workaround for https://community.progress.com/s/article/memory-violation-when-deleting-a-jsonarray
+        // finally:
+        //    if valid-object(poJson)      then delete object poJson.   
+        // end finally.
     end method.
 
     method protected void _parseAccountAdjustment (poJson as JsonObject):
@@ -1347,6 +1349,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         empty temp-table ttStmt.        
         
         lDumpEnabled = _isDumpEnabledFor(cEndpointName).
+        message subst("WallesterApiClient:getAccountStatement(&1, fromRecord=&2, count=&3, otherParams=&4)", pcAccountId, piFromRecord, piCount, _getRequestParams()).
         oResponse = _executeRequest("GET", subst("/v1/accounts/&1/statement?from_record=&2&&records_count=&3&4", pcAccountId, piFromRecord, piCount, _getRequestParams()), pcAuditUser).
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
