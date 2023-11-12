@@ -159,15 +159,17 @@ class wallester.api.WallesterApiClientItTest:
        ttPerson.gender = "MALE".
        ttPerson.mobile = "+37061495615".
        ttPerson.email = "valdemar@bpm-id.com".
-       ttPerson.external_id = "person_123".
+       ttPerson.external_id = "person_123a".
        ttPerson.residence_country_code = "LTU".
        ttPerson.is_represented_by_someone_else = false.
        ttPerson.is_beneficial_owner = true.
        ttPerson.is_pep = false.
        ttPerson.pep_explanation = "Testing political explanation".
-       ttPerson.business_relationship_purpose = "business relation".
+       ttPerson.business_relationship_purpose = "our business relation".
        ttPerson.risk_profile = "Low".
-       ttPerson.loyalty_number = "loyalty_number".
+   //    ttPerson.loyalty_number = "loyalty_number".
+       ttPerson.is_sanctions_related = false.
+       ttPerson.is_adverse_media_involved = false.
        
        // when 
        isOk = api:createPerson(input-output table ttPerson, auditUser).
@@ -534,7 +536,7 @@ class wallester.api.WallesterApiClientItTest:
         // given
         
         // when
-        isOk = api:getCardByExternalId("anastasia@wallester.com", auditUser, output table ttCard).
+        isOk = api:getCardByExternalId("864923", auditUser, output table ttCard).
         
         // then
         temp-table ttCard:write-json("file", "target/getCardByExternalId.json", true).
@@ -658,28 +660,30 @@ class wallester.api.WallesterApiClientItTest:
         ttCardRequest.expiry_days = 90. // 1....1825 - up to 5 years
         ttCardRequest.expiry_days_round = true.
         ttCardRequest.encrypted_pin = "".
-        ttCardRequest.lim_daily_purchase             = 2999.99.
-        ttCardRequest.lim_daily_withdrawal           =  199.99.
-        ttCardRequest.lim_daily_internet_purchase    = 2999.99.
-        ttCardRequest.lim_daily_contactless_purchase =  149.99.
-        ttCardRequest.lim_monthly_purchase             = 14999.99.
-        ttCardRequest.lim_monthly_withdrawal           =   199.99.
-        ttCardRequest.lim_monthly_internet_purchase    = 14999.99.
-        ttCardRequest.lim_monthly_contactless_purchase =  4499.99.
-        ttCardRequest.lim_trn_purchase             = 999.99.
-        ttCardRequest.lim_trn_withdrawal           = 499.99.
-        ttCardRequest.lim_trn_internet_purchase    = 699.99.
-        ttCardRequest.lim_trn_contactless_purchase = 399.99.
+        ttCardRequest.lim_daily_purchase             =   77.99.
+        ttCardRequest.lim_daily_withdrawal           =   77.99.
+        ttCardRequest.lim_daily_internet_purchase    =   77.99.
+        ttCardRequest.lim_daily_contactless_purchase =   77.99.
+        ttCardRequest.lim_monthly_purchase             =    99.99.
+        ttCardRequest.lim_monthly_withdrawal           =    99.99.
+        ttCardRequest.lim_monthly_internet_purchase    =    99.99.
+        ttCardRequest.lim_monthly_contactless_purchase =    99.99.
+        ttCardRequest.lim_trn_purchase             =  44.99.
+        ttCardRequest.lim_trn_withdrawal           =  44.99.
+        ttCardRequest.lim_trn_internet_purchase    =  44.99.
+        ttCardRequest.lim_trn_contactless_purchase =  44.99.
      //   ttCardRequest.sec_3ds_type = .
         ttCardRequest.sec_3ds_mobile = "+37061495615".
 //        ttCardRequest.sec_3ds_language_code = .
         ttCardRequest.sec_3ds_password = "abcd1234".
 //        ttCardRequest.delivery_company_name = .
-        ttCardRequest.delivery_address1 = "Ąžuolų gatvė 10".
+//        ttCardRequest.delivery_address1 = "Ąžuolų gatvė 10".
+        ttCardRequest.delivery_address1 = "Azuolu gatve 10".
  //       ttCardRequest.delivery_address2 = "Žiežmarių km.".
         ttCardRequest.delivery_postal_code = "01234".
-        ttCardRequest.delivery_city        = "Žiežmariai".
-        ttCardRequest.delivery_country_code = "LTU".
+//        ttCardRequest.delivery_city        = "Žiežmariai".
+        ttCardRequest.delivery_city        = "Ziezmariai".
+        ttCardRequest.delivery_country_code = "LVA".
  //       ttCardRequest.delivery_dispatch_method = "StandardLatvianPostMail".
   //      ttCardRequest.delivery_phone = .   
         ttCardRequest.sec_contactless_enabled = no.
@@ -966,12 +970,12 @@ class wallester.api.WallesterApiClientItTest:
         ttStatementRequestParams.include_fees                = true.
         ttStatementRequestParams.include_transactions        = true.
         
-//        ttStatementRequestParams.from_date = add-interval(now, -2, "hour").
-//        ttStatementRequestParams.to_date   = now.
+        ttStatementRequestParams.from_date = add-interval(now, -24, "days").
+        ttStatementRequestParams.to_date   = now.
         
         // when
      //   isOk = api:getAccountStatement("e7e91696-500d-4cb5-a353-582f45ef01bf", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
-        isOk = api:getAccountStatement("d516fd6f-9632-45cd-abbf-a042dac91b60", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
+        isOk = api:getAccountStatement("7838f52b-8987-4d2a-934e-ed0fefb31cc3", 0, 1000, table ttStatementRequestParams, auditUser, output table ttStmt).
         
         // then
         Assert:isTrue(isOk).

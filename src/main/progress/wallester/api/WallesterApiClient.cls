@@ -633,6 +633,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
         oPersonJson:add("risk_profile",           ttPerson.risk_profile).
         oPersonJson:add("loyalty_number",         ttPerson.loyalty_number).
+        oPersonJson:add("preferred_language_code",ttPerson.preferred_language_code).
+        oPersonJson:add("expected_turnover",      ttPerson.expected_turnover).
         oRequestJson = new JsonObject().
         oRequestJson:add("person", oPersonJson).
         empty temp-table ttPerson.        
@@ -700,6 +702,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         ttPerson.risk_profile           = poJson:getCharacter("risk_profile").
         if poJson:has("loyalty_number")
         then ttPerson.loyalty_number         = poJson:getCharacter("loyalty_number").
+        if poJson:has("preferred_language_code")
+        then ttPerson.preferred_language_code = poJson:getCharacter("preferred_language_code").
+        if poJson:has("expected_turnover")
+        then ttPerson.expected_turnover = poJson:getCharacter("expected_turnover").
         ttPerson.created_at             = poJson:GetDatetime("created_at").
         if poJson:has("updated_at")
         then ttPerson.updated_at             = poJson:getDatetime("updated_at").
@@ -2617,6 +2623,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
         oPersonJson:add("risk_profile",           ttPerson.risk_profile).
         oPersonJson:add("loyalty_number",         ttPerson.loyalty_number).
+        oPersonJson:add("preferred_language_code",ttPerson.preferred_language_code).
+        oPersonJson:add("expected_turnover",      ttPerson.expected_turnover).
         oRequestJson = new JsonObject().
         oRequestJson:add("person", oPersonJson).
         

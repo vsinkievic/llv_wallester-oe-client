@@ -22,6 +22,9 @@ def temp-table tt{&prefix}Person no-undo
     field business_relationship_purpose          as char     init ?
     field risk_profile                           as char     init ? // High
     field loyalty_number                         as char     init ?
+    field document_number                        as char     init ?
+    field preferred_language_code                as char     init "ENG"
+    field expected_turnover                      as char     init ?  // possible values From0to1500 From1501to3000 From3001to5000 From5001to15000 From15001AndMore
     field created_at                             as datetime init ?
     field updated_at                             as datetime init ?
     field deactivated_at                         as datetime init ?
