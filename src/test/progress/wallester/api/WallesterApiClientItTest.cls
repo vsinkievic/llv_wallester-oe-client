@@ -47,13 +47,13 @@ class wallester.api.WallesterApiClientItTest:
         super ().
         
         def var oClient as WallesterApiClient no-undo.
-//        oClient = new WallesterApiClient("https://api-sandbox.wallester.eu", "x7BeGHe1uFllio$GcqZbSyjN9oWlM4CTD$2s9@yUXNuI0Cbh6Z674tE0vQb1qiIC").   
-//        oClient:issuerId = "29a6012b-785e-4579-97a4-38b5ade0064c".
-//        oClient:audienceId = "da2b9d46-de76-498e-8746-471e8dd3d120".
+        oClient = new WallesterApiClient("https://api-sandbox.wallester.eu", "x7BeGHe1uFllio$GcqZbSyjN9oWlM4CTD$2s9@yUXNuI0Cbh6Z674tE0vQb1qiIC").   
+        oClient:issuerId = "29a6012b-785e-4579-97a4-38b5ade0064c".
+        oClient:audienceId = "da2b9d46-de76-498e-8746-471e8dd3d120".
  
-        oClient = new WallesterApiClient("https://api.wallester.eu", "AJfqYNM7Sby+ydD!PgMd=MDELCmuu!LVRxY+#*5aSV@D9jAjGgGK&8uEYPAchDNp").   
-        oClient:issuerId = "7fd38a91-3ea2-41e9-a052-7ae7409112de".
-        oClient:audienceId = "d3326f48-ba65-44c1-860e-6a7bdbc400d8".
+//        oClient = new WallesterApiClient("https://api.wallester.eu", "AJfqYNM7Sby+ydD!PgMd=MDELCmuu!LVRxY+#*5aSV@D9jAjGgGK&8uEYPAchDNp").   
+//        oClient:issuerId = "7fd38a91-3ea2-41e9-a052-7ae7409112de".
+//        oClient:audienceId = "d3326f48-ba65-44c1-860e-6a7bdbc400d8".
  
  
         oClient:productCode = "LATEKOLV".
@@ -144,13 +144,13 @@ class wallester.api.WallesterApiClientItTest:
     end method.
    
    
- //   @Test.
+//   @Test.
     method public void createPersonTest():
        // given
        create ttPerson.
-       ttPerson.personal_number = "AK123456".
+       ttPerson.personal_number = "AK20240315".
        ttPerson.personal_number_issuer = "LTU".
-       ttPerson.title_name = "".
+       ttPerson.title_name = "Ms.".
        ttPerson.first_name = "Testauskas".
        ttPerson.middle_name = "Middle".
        ttPerson.last_name = "Tester".
@@ -159,17 +159,25 @@ class wallester.api.WallesterApiClientItTest:
        ttPerson.gender = "MALE".
        ttPerson.mobile = "+37061495615".
        ttPerson.email = "valdemar@bpm-id.com".
-       ttPerson.external_id = "person_123a".
+       ttPerson.external_id = "person_AK20240315".
        ttPerson.residence_country_code = "LTU".
        ttPerson.is_represented_by_someone_else = false.
        ttPerson.is_beneficial_owner = true.
-       ttPerson.is_pep = false.
+       ttPerson.is_pep = true.
        ttPerson.pep_explanation = "Testing political explanation".
-       ttPerson.business_relationship_purpose = "our business relation".
-       ttPerson.risk_profile = "Low".
-   //    ttPerson.loyalty_number = "loyalty_number".
+//       ttPerson.business_relationship_purpose = "our business relation".
+       ttPerson.risk_profile = "Medium".
+//       ttPerson.loyalty_number = "loyalty_number".
+       ttPerson.document_number = "docNr-1234".
        ttPerson.is_sanctions_related = false.
        ttPerson.is_adverse_media_involved = false.
+       
+       ttPerson.address_line1 = "addr 1".
+       ttPerson.address_line2 = "addr 2".
+       ttPerson.address_city  = "City".
+       ttPerson.address_postal_code = "LT-08415".
+       ttPerson.address_country_code = "LTU".
+       ttPerson.expected_turnover = "From1501to3000".
        
        // when 
        isOk = api:createPerson(input-output table ttPerson, auditUser).
@@ -179,31 +187,41 @@ class wallester.api.WallesterApiClientItTest:
        temp-table ttPerson:write-json("file", "target/createPerson.json", true).
     end method.
  
-   // @Test.
+//    @Test.
     method public void updatePersonTest():
        // given
        create ttPerson.
-       ttPerson.id = "d4d87e9f-d556-404f-abbd-905f6473b868".
-       ttPerson.personal_number = "AK123456".
-       ttPerson.personal_number_issuer = "LTU".
-       ttPerson.title_name = "Mr.".
-       ttPerson.first_name = "Testauskas s".
-       ttPerson.middle_name = "Middle.".
-       ttPerson.last_name = "Tester.".
-       ttPerson.birth_date = date(09, 09, 1999).
-       ttPerson.birth_country_code = "LVA".
+       ttPerson.id = "8682acac-b0d3-4402-8eb0-ebd74a73b3eb".
+       ttPerson.personal_number = "AK20240315".
+       ttPerson.personal_number_issuer = "LVA".
+       ttPerson.title_name = "Ms.".
+       ttPerson.first_name = "Testauskas-".
+       ttPerson.middle_name = "Middle-".
+       ttPerson.last_name = "Tester-".
+       ttPerson.birth_date = date(10, 22, 1999).
+       ttPerson.birth_country_code = "POL".
        ttPerson.gender = "FEMALE".
        ttPerson.mobile = "+37061411111".
        ttPerson.email = "valdemar_@bpm-id.com".
-       ttPerson.external_id = "person_123_".
-       ttPerson.residence_country_code = "LIE".
-       ttPerson.is_represented_by_someone_else = true.
-       ttPerson.is_beneficial_owner = false.
+       ttPerson.external_id = "person_AK20240315-".
+       ttPerson.residence_country_code = "CZE".
+       ttPerson.is_represented_by_someone_else = false.
+       ttPerson.is_beneficial_owner = true.
+       ttPerson.is_adverse_media_involved = true.
        ttPerson.is_pep = false.
-       ttPerson.pep_explanation = "Testing political explanation".
-       ttPerson.business_relationship_purpose = "business relation_".
-       ttPerson.risk_profile = "Medium".
-       ttPerson.loyalty_number = "loyalty_number".
+       ttPerson.pep_explanation = "Testing political explanation-".
+//       ttPerson.business_relationship_purpose = "business relation_".
+       ttPerson.risk_profile = "Low".
+//       ttPerson.loyalty_number = "loyalty_number".
+       ttPerson.document_number = "docNr-1234+".
+       ttPerson.preferred_language_code = "ENG".
+       ttPerson.expected_turnover = "From0to1500".
+       
+       ttPerson.address_line1 = "Addr 1-".
+       ttPerson.address_line2 = "Addr 2-".
+       ttPerson.address_city  = "City-".
+       ttPerson.address_postal_code = "LT-8415".
+       ttPerson.address_country_code = "NOR".
        
        // when 
        isOk = api:updatePerson(input-output table ttPerson, auditUser).
@@ -214,12 +232,12 @@ class wallester.api.WallesterApiClientItTest:
     end method.
     
     
-  //  @Test.
+//    @Test.
     method public void getPersonById():
         // given
         
         // when
-        isOk = api:getPersonById("d4d87e9f-d556-404f-abbd-905f6473b868", auditUser, output table ttPerson).
+        isOk = api:getPersonById("8682acac-b0d3-4402-8eb0-ebd74a73b3eb", auditUser, output table ttPerson).
         
         // then
         Assert:isTrue(isOk).

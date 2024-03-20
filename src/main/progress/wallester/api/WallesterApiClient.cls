@@ -602,6 +602,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         def var oRequestJson as JsonObject no-undo.
         def var oPersonJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
+        def var oAddressJson  as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
         def var lDumpEnabled as log no-undo init false.
         def var cEndpointName as char no-undo init "createPerson".
@@ -625,16 +626,26 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oPersonJson:add("external_id",            ttPerson.external_id).
         oPersonJson:add("residence_country_code", ttPerson.residence_country_code).
         oPersonJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
-        oPersonJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
+        oPersonJson:add("is_beneficial_owner",    ttPerson.is_beneficial_owner).
         oPersonJson:add("is_politically_exposed_person", ttPerson.is_pep).
         oPersonJson:add("is_sanctions_related",          ttPerson.is_sanctions_related).
         oPersonJson:add("is_adverse_media_involved",     ttPerson.is_adverse_media_involved).
         oPersonJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
-        oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
         oPersonJson:add("risk_profile",           ttPerson.risk_profile).
         oPersonJson:add("loyalty_number",         ttPerson.loyalty_number).
+        oPersonJson:add("document_number",        ttPerson.document_number).
         oPersonJson:add("preferred_language_code",ttPerson.preferred_language_code).
         oPersonJson:add("expected_turnover",      ttPerson.expected_turnover).
+        if (ttPerson.address_line1>"" or ttPerson.address_line2>"" or ttPerson.address_city>"" or ttPerson.address_postal_code>"" or ttPerson.address_country_code>"")
+        then do:
+            oAddressJson = new JsonObject().
+            oAddressJson:add("address1",     ttPerson.address_line1).
+            oAddressJson:add("address2",     ttPerson.address_line2).
+            oAddressJson:add("city",         ttPerson.address_city).
+            oAddressJson:add("postal_code",  ttPerson.address_postal_code).
+            oAddressJson:add("country_code", ttPerson.address_country_code).
+            oPersonJson:add("address", oAddressJson).
+        end.
         oRequestJson = new JsonObject().
         oRequestJson:add("person", oPersonJson).
         empty temp-table ttPerson.        
@@ -657,7 +668,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             if valid-object(oPersonJson)    then delete object oPersonJson.
             if valid-object(oRequestJson)   then delete object oRequestJson.
             if valid-object(oResponseJson)  then delete object oResponseJson.
-            if valid-object(oResponse)      then delete object oResponse.            
+            if valid-object(oResponse)      then delete object oResponse.        
+            if valid-object(oAddressJson)   then delete object oAddressJson.    
         end finally.
     end method.
     
@@ -665,13 +677,19 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
         if not valid-object(poJson)
         then return.
+        
+        def var oAddressJson as JsonObject no-undo.
 
         create ttPerson.
         ttPerson.id = poJson:GetCharacter("id").
+        if poJson:has("status")
+        then ttPerson.sts = poJson:GetCharacter("status").
         if poJson:has("personal_number")
         then ttPerson.personal_number = poJson:GetCharacter("personal_number").
         if poJson:has("personal_number_issuer")
         then ttPerson.personal_number_issuer = poJson:getCharacter("personal_number_issuer").
+        if poJson:has("document_number")
+        then ttPerson.document_number = poJson:getCharacter("document_number").
         if poJson:has("title")
         then ttPerson.title_name             = poJson:getCharacter("title").
         ttPerson.first_name             = poJson:getCharacter("first_name").
@@ -684,7 +702,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttPerson.birth_country_code     = poJson:GetCharacter("birth_country_code").
         if poJson:has("gender")
         then ttPerson.gender                 = poJson:getCharacter("gender").
-        ttPerson.mobile                 = poJson:getCharacter("mobile").
+        ttPerson.mobile                      = poJson:getCharacter("mobile").
         if poJson:has("email")
         then ttPerson.email                  = poJson:getCharacter("email").
         if poJson:has("external_id")
@@ -706,6 +724,23 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttPerson.preferred_language_code = poJson:getCharacter("preferred_language_code").
         if poJson:has("expected_turnover")
         then ttPerson.expected_turnover = poJson:getCharacter("expected_turnover").
+        if poJson:has("push_notifications_enabled")
+        then ttPerson.push_notification_enabled = poJson:GetLogical("push_notifications_enabled").
+        
+        if poJson:has("address")
+        then do:
+            oAddressJson = poJson:GetJsonObject("address").
+            if oAddressJson:has("address1")
+            then ttPerson.address_line1 = oAddressJson:getCharacter("address1").
+            if oAddressJson:has("address2")
+            then ttPerson.address_line2 = oAddressJson:getCharacter("address2").
+            if oAddressJson:has("city")
+            then ttPerson.address_city = oAddressJson:GetCharacter("city").
+            if oAddressJson:has("postal_code")
+            then ttPerson.address_postal_code = oAddressJson:GetCharacter("postal_code").
+            if oAddressJson:has("country_code")
+            then ttPerson.address_country_code = oAddressJson:getCharacter("country_code").
+        end.
         ttPerson.created_at             = poJson:GetDatetime("created_at").
         if poJson:has("updated_at")
         then ttPerson.updated_at             = poJson:getDatetime("updated_at").
@@ -713,7 +748,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttPerson.deactivated_at         = poJson:getDatetime("deactivated_at").
         
         finally:
-            if valid-object(poJson) then delete object poJson.            
+            if valid-object(poJson) then delete object poJson.    
+            if valid-object(oAddressJson) then delete object oAddressJson.        
         end finally.
     end method.
 
@@ -2586,7 +2622,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
 
     method public logical updatePerson( input-output TABLE for ttPerson, input pcAuditUser as character ):
         def var oRequestJson as JsonObject no-undo.
-        def var oPersonJson as JsonObject no-undo.
+        def var oAddressJson  as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
         def var lDumpEnabled as log no-undo init false.
@@ -2599,44 +2635,52 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if ttPerson.id =? or ttPerson.id = ""
         then undo, throw new AppError("Provide personID!", 0).
         
-        oPersonJson = new JsonObject().
-        oPersonJson:add("id",                     ttPerson.id).
-        oPersonJson:add("personal_number",        ttPerson.personal_number).
-        oPersonJson:add("personal_number_issuer", ttPerson.personal_number_issuer).
-        oPersonJson:add("title",                  ttPerson.title_name).
-        oPersonJson:add("first_name",             ttPerson.first_name).
-        oPersonJson:add("middle_name",            ttPerson.middle_name).
-        oPersonJson:add("last_name",              ttPerson.last_name).
-        oPersonJson:add("birth_date",             ttPerson.birth_date).
-        oPersonJson:add("birth_country_code",     ttPerson.birth_country_code).
-        oPersonJson:add("gender",                 caps(ttPerson.gender)).
-        oPersonJson:add("mobile",                 ttPerson.mobile).
-        oPersonJson:add("email",                  ttPerson.email).
-        oPersonJson:add("external_id",            ttPerson.external_id).
-        oPersonJson:add("residence_country_code", ttPerson.residence_country_code).
-        oPersonJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
-        oPersonJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
-        oPersonJson:add("is_politically_exposed_person", ttPerson.is_pep).
-        oPersonJson:add("is_sanctions_related",          ttPerson.is_sanctions_related).
-        oPersonJson:add("is_adverse_media_involved",     ttPerson.is_adverse_media_involved).
-        oPersonJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
-        oPersonJson:add("business_relationship_purpose", ttPerson.business_relationship_purpose).
-        oPersonJson:add("risk_profile",           ttPerson.risk_profile).
-        oPersonJson:add("loyalty_number",         ttPerson.loyalty_number).
-        oPersonJson:add("preferred_language_code",ttPerson.preferred_language_code).
-        oPersonJson:add("expected_turnover",      ttPerson.expected_turnover).
         oRequestJson = new JsonObject().
-        oRequestJson:add("person", oPersonJson).
+//        oRequestJson:add("id",                     ttPerson.id).
+        oRequestJson:add("personal_number",        ttPerson.personal_number).
+        oRequestJson:add("personal_number_issuer", ttPerson.personal_number_issuer).
+        oRequestJson:add("title",                  ttPerson.title_name).
+        oRequestJson:add("first_name",             ttPerson.first_name).
+        oRequestJson:add("middle_name",            ttPerson.middle_name).
+        oRequestJson:add("last_name",              ttPerson.last_name).
+        oRequestJson:add("birth_date",             ttPerson.birth_date).
+        oRequestJson:add("birth_country_code",     ttPerson.birth_country_code).
+        oRequestJson:add("gender",                 caps(ttPerson.gender)).
+        oRequestJson:add("mobile",                 ttPerson.mobile).
+        oRequestJson:add("email",                  ttPerson.email).
+        oRequestJson:add("external_id",            ttPerson.external_id).
+        oRequestJson:add("residence_country_code", ttPerson.residence_country_code).
+        oRequestJson:add("is_represented_by_someone_else", ttPerson.is_represented_by_someone_else).
+        oRequestJson:add("is_beneficial_owner",   ttPerson.is_beneficial_owner).
+        oRequestJson:add("is_politically_exposed_person", ttPerson.is_pep).
+        oRequestJson:add("is_sanctions_related",          ttPerson.is_sanctions_related).
+        oRequestJson:add("is_adverse_media_involved",     ttPerson.is_adverse_media_involved).
+        oRequestJson:add("politically_exposed_person_explanation", ttPerson.pep_explanation).
+        oRequestJson:add("risk_profile",           ttPerson.risk_profile).
+        oRequestJson:add("loyalty_number",         ttPerson.loyalty_number).
+        oRequestJson:add("document_number",        ttPerson.document_number).
+        oRequestJson:add("preferred_language_code",ttPerson.preferred_language_code).
+        oRequestJson:add("expected_turnover",      ttPerson.expected_turnover).
+        if (ttPerson.address_line1>"" or ttPerson.address_line2>"" or ttPerson.address_city>"" or ttPerson.address_postal_code>"" or ttPerson.address_country_code>"")
+        then do:
+            oAddressJson = new JsonObject().
+            oAddressJson:add("address1",     ttPerson.address_line1).
+            oAddressJson:add("address2",     ttPerson.address_line2).
+            oAddressJson:add("city",         ttPerson.address_city).
+            oAddressJson:add("postal_code",  ttPerson.address_postal_code).
+            oAddressJson:add("country_code", ttPerson.address_country_code).
+            oRequestJson:add("address", oAddressJson).
+        end.
         
         lDumpEnabled = _isDumpEnabledFor(cEndpointName).
         if lDumpEnabled then _dump(cEndpointName, "request", oRequestJson).
-        oResponse = _executeRequest("PUT", "/v1/persons/" + ttPerson.id, pcAuditUser, oRequestJson).
+        oResponse = _executeRequest("PATCH", "/v1/persons/" + ttPerson.id, pcAuditUser, oRequestJson).
         empty temp-table ttPerson.        
 
         if type-of(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject")
         then do:
             oResponseJson = cast(oResponse:Entity, "Progress.Json.ObjectModel.JsonObject").
-            if lDumpEnabled then _dump(cEndpointName, "response", oResponseJson).
+            if lDumpEnabled then _dump(cEndpointName, "response-" + string(oResponse:StatusCode), oResponseJson).
 
             _parsePerson(oResponseJson:GetJsonObject("person")).
             return true.
@@ -2644,8 +2688,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         undo, throw new AppError(subst("Failed to update person: unsupported response type: &1", oResponse:entity:getclass ():typeName)).
 
         finally:
-            if valid-object(oPersonJson)    then delete object oPersonJson.
             if valid-object(oRequestJson)   then delete object oRequestJson.
+            if valid-object(oAddressJson)   then delete object oAddressJson.    
             if valid-object(oResponseJson)  then delete object oResponseJson.
             if valid-object(oResponse)      then delete object oResponse.            
         end finally.

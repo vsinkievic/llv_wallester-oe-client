@@ -1,5 +1,6 @@
 def temp-table tt{&prefix}Person no-undo 
     field id                                     as char     init ?
+    field sts                                    as char     init ?
     field personal_number                        as char     init ?
     field personal_number_issuer                 as char     init ?
     field title_name                             as char     init ?  case-sensitive serialize-name "title" // Miss
@@ -24,7 +25,13 @@ def temp-table tt{&prefix}Person no-undo
     field loyalty_number                         as char     init ?
     field document_number                        as char     init ?
     field preferred_language_code                as char     init "ENG"
+    field push_notification_enabled              as log      init ?
     field expected_turnover                      as char     init ?  // possible values From0to1500 From1501to3000 From3001to5000 From5001to15000 From15001AndMore
+    field address_line1                          as char     init ?
+    field address_line2                          as char     init ?
+    field address_city                           as char     init ?
+    field address_postal_code                    as char     init ?
+    field address_country_code                   as char     init ?
     field created_at                             as datetime init ?
     field updated_at                             as datetime init ?
     field deactivated_at                         as datetime init ?
