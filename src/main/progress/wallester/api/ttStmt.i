@@ -9,6 +9,8 @@ def temp-table tt{&prefix}Stmt no-undo before-table ttb{&prefix}Stmt
     field transaction_currency_code as char
     field account_amount as dec
     field account_currency_code as char
+    field total_amount as dec
+    field exchange_rate as dec
     field merchant_category_code as char
     field merchant_id as char
     field terminal_id as char
@@ -24,4 +26,7 @@ def temp-table tt{&prefix}Stmt no-undo before-table ttb{&prefix}Stmt
     field marked_for_dispute_by as char
     field rec_status as char     // status
     field response as char
+    field response_code as char
+    field sub_type as char
+    field purchase_date as datetime
     .

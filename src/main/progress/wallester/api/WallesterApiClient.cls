@@ -987,6 +987,8 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttStmt.tx_group                   = poJson:getCharacter("group").
         if poJson:has("date")                 
         then ttStmt.date                       = poJson:GetDatetime("date").
+        if poJson:has("purchase_date")
+        then ttStmt.purchase_date              = poJson:getDatetime("purchase_date").
         if poJson:has("transaction_amount")
         then ttStmt.transaction_amount         = poJson:getDecimal("transaction_amount").
         if poJson:has("transaction_currency_code")
@@ -995,6 +997,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttStmt.account_amount             = poJson:getDecimal("account_amount").
         if poJson:has("account_currency_code")
         then ttStmt.account_currency_code      = poJson:getCharacter("account_currency_code").
+        if poJson:has("total_amount")
+        then ttStmt.total_amount               = poJson:getDecimal("total_amount").
+        if poJson:has("exchange_rate")
+        then ttStmt.total_amount               = poJson:getDecimal("exchange_rate").
 
         if poJson:has("merchant_category_code")
         then ttStmt.merchant_category_code     = poJson:getCharacter("merchant_category_code").
@@ -1029,6 +1035,10 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttStmt.rec_status      = poJson:getCharacter("status").
         if poJson:has("response")
         then ttStmt.response      = poJson:getCharacter("response").
+        if poJson:has("response_code")
+        then ttStmt.response_code = poJson:getCharacter("response_code").
+        if poJson:has("sub_type")
+        then ttStmt.sub_type      = poJson:getCharacter("sub_type").
 
         // Workaround for https://community.progress.com/s/article/memory-violation-when-deleting-a-jsonarray
         // finally:
@@ -1089,10 +1099,6 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         then ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
         if poJson:has("is_disposable")
         then ttCard.is_disposable = poJson:getLogical("is_disposable").
-        if poJson:has("is_enrolled_for_3d_secure")
-        then ttCard.is_enrolled_for_3ds = poJson:getLogical("is_enrolled_for_3d_secure").
-        if poJson:has("is_card_3d_secure_activated")
-        then ttCard.is_3ds_activated    = poJson:getLogical("is_card_3d_secure_activated").
         if poJson:has("renew_automatically")
         then ttCard.renew_automatically = poJson:getLogical("renew_automatically").
         
@@ -1244,11 +1250,6 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     END METHOD.
 
-    method public logical enrolCardFor3Dsecure( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
-        
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
-
-    end method.
 
     method public logical getAccountAuthorizations( input pcAccountId as character, input ptFromDate as datetime, input ptTillDate as datetime, input piFromRecord as int64, input piCount as integer, input pcAuditUser as character, output TABLE for ttAuth ):
         
@@ -2333,11 +2334,6 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         end finally.
     end method.
 
-    method public logical unenrolCardFrom3Dsecure( input pcCardId as character, input pcAuditUser as character, output TABLE for ttCard ):
-        
-        undo, throw new Progress.Lang.AppError("METHOD NOT IMPLEMENTED", 0).
-
-    end method.
 
     method public logical update3DsecuritySettings( input pcCardId as character, input pcType as character, input pcMobile as character, input pcLanguageCode as character, input pcPassword as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.

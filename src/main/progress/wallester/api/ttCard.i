@@ -35,8 +35,6 @@ def temp-table tt{&prefix}Card no-undo
     field lim_trn_withdrawal               as dec      init ?
     field lim_trn_internet_purchase        as dec      init ?
     field lim_trn_contactless_purchase     as dec      init ?
-    field is_enrolled_for_3ds              as log      init ?
-    field is_3ds_activated                 as log      init ?
     field sec_3ds_type                     as char     init ?
     field sec_3ds_mobile                   as char     init ?
     field sec_3ds_language_code            as char     init ?
