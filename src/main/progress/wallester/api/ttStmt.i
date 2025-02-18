@@ -28,5 +28,5 @@ def temp-table tt{&prefix}Stmt no-undo before-table ttb{&prefix}Stmt
     field response as char
     field response_code as char
     field sub_type as char
-    field purchase_date as datetime
+    field purchase_date as datetime-tz
     .

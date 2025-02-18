@@ -988,7 +988,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         if poJson:has("date")                 
         then ttStmt.date                       = poJson:GetDatetime("date").
         if poJson:has("purchase_date")
-        then ttStmt.purchase_date              = poJson:getDatetime("purchase_date").
+        then ttStmt.purchase_date              = poJson:GetDatetimeTZ("purchase_date").
         if poJson:has("transaction_amount")
         then ttStmt.transaction_amount         = poJson:getDecimal("transaction_amount").
         if poJson:has("transaction_currency_code")
