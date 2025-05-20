@@ -1147,10 +1147,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
             o3DsecureJson = poJson:GetJsonObject("3d_secure_settings").
             if valid-object(o3DsecureJson)
             then do:
-                ttCard.sec_3ds_type          = o3DsecureJson:GetCharacter("type").
-                ttCard.sec_3ds_mobile        = o3DsecureJson:GetCharacter("mobile").
-                ttCard.sec_3ds_language_code = o3DsecureJson:GetCharacter("language_code").
-                ttCard.sec_3ds_password      = o3DsecureJson:GetCharacter("password").
+                if o3DsecureJson:has("mobile")   then ttCard.sec_3ds_mobile   = o3DsecureJson:GetCharacter("mobile").
+                if o3DsecureJson:has("email")    then ttCard.sec_3ds_email    = o3DsecureJson:GetCharacter("email").
+                if o3DsecureJson:has("password") then ttCard.sec_3ds_password = o3DsecureJson:GetCharacter("password").
             end.
         end.
 
