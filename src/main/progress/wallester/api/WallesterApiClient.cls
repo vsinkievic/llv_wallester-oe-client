@@ -2334,7 +2334,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
     end method.
 
 
-    method public logical update3DsecuritySettings( input pcCardId as character, input pcType as character, input pcMobile as character, input pcLanguageCode as character, input pcPassword as character, input pcAuditUser as character, output TABLE for ttCard ):
+    method public logical update3DsecuritySettings( input pcCardId as character, input pcMobile as character, input pcEmail as character, input pcPassword as character, input pcAuditUser as character, output TABLE for ttCard ):
         def var oRequestJson as JsonObject no-undo.
         def var oResponseJson as JsonObject no-undo.
         def var oResponse as IHttpResponse no-undo.
@@ -2343,20 +2343,16 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         
         if not pcCardId > ""
         then undo, throw new AppError("Provide card_id!", 0).
-        if not pcType > ""
-        then undo, throw new AppError("Provide sec_3ds_type!", 0).
         if not pcMobile > ""
         then undo, throw new AppError("Provide sec_3ds_mobile!", 0).
         if not pcPassword > ""
         then undo, throw new AppError("Provide sec_3ds_password!", 0).
-        if not pcLanguageCode > ""
-        then undo, throw new AppError("Provide sec_3ds_language_code!", 0).
         
         oRequestJson = new JsonObject().
-        oRequestJson:add("type", pcType).
         oRequestJson:add("mobile", pcMobile).
-        oRequestJson:add("language_code", pcLanguageCode).
         oRequestJson:add("password", pcPassword).
+        if not pcEmail > ""
+        then oRequestJson:add("email", pcEmail).
         
         empty temp-table ttCardRequest.
         empty temp-table ttCard.        
