@@ -514,9 +514,9 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         oRequestJson:add("security", oSecurityJson).
         
         o3dsJson = new JsonObject().
-        o3dsJson:add("type", ttCardRequest.sec_3ds_type).
         o3dsJson:add("mobile", ttCardRequest.sec_3ds_mobile).
-        o3dsJson:add("language_code", ttCardRequest.sec_3ds_language_code).
+        if trim(ttCardRequest.sec_3ds_email) > ""
+        then o3dsJson:add("email", ttCardRequest.sec_3ds_email).
         o3dsJson:add("password", ttCardRequest.sec_3ds_password).
         oRequestJson:add("3d_secure_settings", o3dsJson).
         
