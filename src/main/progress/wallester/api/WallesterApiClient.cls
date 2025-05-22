@@ -26,6 +26,7 @@ using wallester.api.CardBlockType from propath.
 using wallester.api.CardCloseReason from propath.
 using common.helpers.Files from propath.
 using common.helpers.Converter from propath.
+using common.helpers.Dates from propath.
 
 block-level on error undo, throw.
 
@@ -1093,7 +1094,7 @@ class wallester.api.WallesterApiClient implements WallesterApi:
         ttCard.masked_card_number  = poJson:getCharacter("masked_card_number").
         if (poJson:has("reference_number"))
         then ttCard.reference_number    = poJson:getCharacter("reference_number").
-        ttCard.expiry_date         = poJson:GetDatetime("expiry_date").
+        ttCard.expiry_date         = Dates:toUTC(poJson:GetDatetime("expiry_date")).
         ttCard.card_status         = poJson:GetCharacter("status").    
         if poJson:has("embossing_name")
         then ttCard.embossing_name      = poJson:GetCharacter("embossing_name").
