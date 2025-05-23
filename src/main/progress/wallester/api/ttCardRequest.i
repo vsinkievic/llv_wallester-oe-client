@@ -41,7 +41,7 @@ def temp-table tt{&prefix}CardRequest no-undo
 //    field is_enrolled_for_3ds as log
 //    field is_3ds_activated as log
     field sec_3ds_mobile                   as char    init ?
-    field sec_3ds_email                    as char    init "ENG"
+    field sec_3ds_email                    as char    init ?
     field sec_3ds_password                 as char    init ?
 //    field delivery_first_name as char
 //    field delivery_last_name  as char
